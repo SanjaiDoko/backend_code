@@ -515,7 +515,7 @@ const loginParameter = async (model, loginData, res, req) => {
       //     //   return res.send({ status: 0, response: message.loginExceeded })
       //     // }
       //   }
-      //   else{
+        // else{
 
       //     return res.send({ status: 0, response: message.wrongPassword });
       //   }
