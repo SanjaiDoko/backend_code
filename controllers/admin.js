@@ -9,7 +9,7 @@ module.exports = () => {
         let data = { status: 0, response: message.inValid }, usersData
 
         try {
-          usersData = await db.findAndSelect("user", { status: { $in: [1, 2] } }, { _id: 1, fullName: 1, mobileNumber: 1, email: 1, createdAt: 1 })
+          usersData = await db.findAndSelect("user", { status: { $in: [1, 2] } }, { _id: 1, fullName: 1, mobileNumber: 1, email: 1, createdAt: 1, status:1 })
           if (usersData) {
     
             return res.send({ status: 1, data: JSON.stringify(usersData) })

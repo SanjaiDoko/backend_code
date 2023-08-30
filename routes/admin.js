@@ -12,8 +12,7 @@ module.exports = (app) => {
     const admin = require("../controllers/admin")();
 
     app.get("/user/getAllUsers", admin.getAllUsers);
-
-    // app.post("/admin/register", admin.registration)
+    
   } catch (error) {
     console.log(error.message);
   }

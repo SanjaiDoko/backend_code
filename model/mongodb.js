@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 
 //Schema Imports
 const user = require('../schema/user')
+const ticket = require('../schema/ticket')
 // const userDetail = require('../schema/main/userDetail')
 // const country = require('../schema/main/country')
 // const costHeading = require('../schema/main/costHeading')
@@ -29,6 +30,7 @@ const { ObjectId } = require('bson')
 //DB Collection Schema
 const db = {
   user,
+  ticket,
 //   userDetail,
 //   country,
 //   costHeading,
