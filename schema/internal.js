@@ -25,7 +25,11 @@ let internalSchema = mongoose.Schema({
         trim: true
     },
     role: {
-        type: Number,               // 2 - Admin, 3 - OBT, 4 - RDT, 5 - OT
+        type: Number,               // 2 - Admin, 1 - user
+    },
+    pwOtp: {
+        type: String,
+        trim: true
     },
     createdBy: {
         type: ObjectId
