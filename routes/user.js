@@ -22,6 +22,10 @@ module.exports = (app) => {
 
         app.post('/user/changeForgotPassword', userValidation.forgotPassword, user.changeForgotPassword)
 
+        app.post('/user/logout', userValidation.checkId, user.logout)
+
+        // app.post('/user/updateStatus',  user.updateStatus)
+
         app.get("/crm",(req,res) => {
 
             return res.send("welcome to the crm")

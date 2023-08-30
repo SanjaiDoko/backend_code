@@ -5,20 +5,20 @@ const { check, validationResult } = require('express-validator')
 module.exports = function (app, io) {
     let data = { status: 0, response: 'Invalid Request' }, validator = {}
 
-    // validator.checkId = [
-    //     check('data').notEmpty().withMessage('Data cannot be empty'),
-    //     check('data.*.id').notEmpty().withMessage('Id is required field'),
-    //     (req, res, next) => {
-    //         const errors = validationResult(req).array();
-    //         if (errors.length > 0) {
-    //             data.response = errors[0].msg;
+    validator.checkId = [
+        check('data').notEmpty().withMessage('Data cannot be empty'),
+        check('data.*.id').notEmpty().withMessage('Id is required field'),
+        (req, res, next) => {
+            const errors = validationResult(req).array();
+            if (errors.length > 0) {
+                data.response = errors[0].msg;
 
-    //             return res.send(data);
-    //         }
+                return res.send(data);
+            }
 
-    //         return next();
-    //     }
-    // ]
+            return next();
+        }
+    ]
 
     // validator.checkUserId = [
     //     check('data').notEmpty().withMessage('Data cannot be empty'),

@@ -4,9 +4,9 @@ const bcrypt = require("bcrypt");
 const { transporter } = require("../model/mail");
 const ejs = require("ejs");
 const path = require("path");
-const {message} = require("../model/message");
+const { message } = require("../model/message");
 const { ObjectId } = require("bson");
-const { default: mongoose } = require('mongoose')
+const { default: mongoose } = require("mongoose");
 
 module.exports = () => {
   let router = {},
@@ -105,21 +105,56 @@ module.exports = () => {
       if (loginData.type === 1) {
         //Type 1 - User Schema
         common.loginParameter("user", loginData, res, req);
-      }
-      //   else if (loginData.type === 2) {                      //Type 2 - Partner Schema
-      //     common.loginParameter('cfs', loginData, res, req)
-      //   }
-      else if (loginData.type === 3) {
-        //Type 3 - Internal Schema
+      } else if (loginData.type === 2) {
+        //Type 2 - Internal Schema
         common.loginParameter("internal", loginData, res, req);
       } else {
         return res.send(data);
       }
+      // return res.send(data);
     } catch (error) {
       logger.error(`Error in user controller - login: ${error.message}`);
       res.send(error.message);
     }
   };
+
+   //Logout
+   router.logout = async (req, res) => {
+    let data = { status: 0, response: message.inValid }
+
+    try {
+      let logoutData = req.body
+
+      if (Object.keys(logoutData).length === 0 && logoutData.data === undefined) {
+        res.send(data)
+
+        return
+      }
+      logoutData = logoutData.data[0]
+
+      if (!mongoose.isValidObjectId(logoutData.id)) {
+
+        return res.send({ status: 0, response: message.invalidUserId })
+      }
+
+      if (logoutData.type === 1) {                            //Type 1 - User Schema 
+        common.logoutParameter('user', logoutData, res, req)
+      }
+      else if (logoutData.type === 2) {                      //Type 2 - Partner Schema 
+        common.logoutParameter('internal', logoutData, res, req)
+      }
+      else {
+
+        return res.send(data)
+      }
+    } catch (error) {
+      logger.error(`Error in user controller - logout: ${error.message}`)
+      res.send(error.message)
+    }
+  }
+
+  //update Status
+  
 
   //Forgot Password
   router.forgotPassword = async (req, res) => {
@@ -164,33 +199,30 @@ module.exports = () => {
         } else {
           return res.send({ status: 1, response: "Mail sent sucessfully" });
         }
+      } else if (forgotPasswordData.type && forgotPasswordData.type === 2) {
+        userData = await db.findSingleDocument("internal", {
+          email: forgotPasswordData.email,
+          status: 1,
+        });
+        if (userData !== null && Object.keys(userData) !== 0) {
+          otpAdd = await db.findOneAndUpdate(
+            "internal",
+            { _id: new ObjectId(userData._id) },
+            { pwOtp: otp }
+          );
+
+          await forgotPasswordMail({
+            emailTo: userData.email,
+            fullName: userData.fullName,
+            url: "http://localhost:5173/change-password/" + userData._id + "/2",
+            otp: otpAdd._doc.pwOtp,
+          });
+
+          return res.send({ status: 1, response: message.sendMail });
+        } else {
+          return res.send({ status: 1, response: message.sendMail });
+        }
       }
-      //   else if (forgotPasswordData.type && forgotPasswordData.type === 2) {
-      //     userData = await db.findSingleDocument("cfs", {
-      //       email: forgotPasswordData.email,
-      //       status: 1,
-      //     });
-      //     if (userData !== null && Object.keys(userData) !== 0) {
-      //       otpAdd = await db.findOneAndUpdate(
-      //         "cfs",
-      //         { _id: new ObjectId(userData._id) },
-      //         { pwOtp: otp }
-      //       );
-
-      //       await forgotPasswordMail({
-      //         emailTo: userData.email,
-      //         fullName: userData.fullName,
-      //         url: CONFIGJSON.settings.changePasswordUrl + userData._id + "/2",
-      //         linkdinUrl: CONFIGJSON.settings.linkdinUrl,
-      //         instaUrl: CONFIGJSON.settings.instaUrl,
-      //         otp: otpAdd._doc.pwOtp,
-      //       });
-
-      //       return res.send({ status: 1, response: message.sendMail });
-      //     } else {
-      //       return res.send({ status: 1, response: message.sendMail });
-      //     }
-      //   }
       return res.send(data);
     } catch (error) {
       console.log(
@@ -218,7 +250,7 @@ module.exports = () => {
         return;
       }
       passwordData = passwordData.data[0];
-    //   passwordData.password = common.decryptAPI(passwordData.password);
+      //   passwordData.password = common.decryptAPI(passwordData.password);
 
       if (!mongoose.isValidObjectId(passwordData.id)) {
         return res.send({ status: 0, response: message.invalidUserId });
@@ -230,14 +262,17 @@ module.exports = () => {
           _id: new ObjectId(passwordData.id),
           pwOtp: passwordData.otp,
         });
-        if(checkOtp){
-            if (!checkOtp && Object.keys(checkOtp).length === 0) {
-                return res.send({ status: 0, response: message.forgotOtpmismatched });
-              }
-        }else{
-            return res.send(data);
+        if (checkOtp) {
+          if (!checkOtp && Object.keys(checkOtp).length === 0) {
+            return res.send({
+              status: 0,
+              response: message.forgotOtpmismatched,
+            });
+          }
+        } else {
+          return res.send(data);
         }
-        
+
         updatePassword = await db.findByIdAndUpdate("user", passwordData.id, {
           password: passwordData.password,
           pwOtp: " ",
@@ -246,53 +281,53 @@ module.exports = () => {
           updatePassword.modifiedCount !== 0 &&
           updatePassword.matchedCount !== 0
         ) {
-        //   await db.deleteOneDocument("sessionManagement", {
-        //     userId: new ObjectId(passwordData.id),
-        //   });
+          //   await db.deleteOneDocument("sessionManagement", {
+          //     userId: new ObjectId(passwordData.id),
+          //   });
 
-        //   event.eventEmitterInsert.emit("insert", "userClone", {
-        //     originalId: passwordData.id,
-        //     actionType: "update",
-        //     fullName: checkOtp._doc.fullName,
-        //     actionMessage: "Changed Password",
-        //     data: passwordData,
-        //   });
+          //   event.eventEmitterInsert.emit("insert", "userClone", {
+          //     originalId: passwordData.id,
+          //     actionType: "update",
+          //     fullName: checkOtp._doc.fullName,
+          //     actionMessage: "Changed Password",
+          //     data: passwordData,
+          //   });
 
           return res.send({ status: 1, response: message.updatedSucess });
         }
 
         return res.send(data);
-      } 
-    //   else if (passwordData.type && passwordData.type === 2) {
-    //     checkOtp = await db.findOneDocumentExists("cfs", {
-    //       _id: new ObjectId(passwordData.id),
-    //       pwOtp: passwordData.otp,
-    //     });
-    //     if (checkOtp === false) {
-    //       return res.send({ status: 0, response: message.forgotOtpmismatched });
-    //     }
-    //     updatePassword = await db.findByIdAndUpdate("cfs", passwordData.id, {
-    //       password: passwordData.password,
-    //       pwOtp: " ",
-    //     });
-    //     if (
-    //       updatePassword.modifiedCount !== 0 &&
-    //       updatePassword.matchedCount !== 0
-    //     ) {
-    //     //   await db.deleteOneDocument("sessionManagement", {
-    //     //     userId: new ObjectId(passwordData.id),
-    //     //   });
-    //     //   event.eventEmitterInsert.emit("insert", "cfsClone", {
-    //     //     originalId: passwordData.id,
-    //     //     actionType: "update",
-    //     //     data: passwordData,
-    //     //   });
+      }
+        else if (passwordData.type && passwordData.type === 2) {
+          checkOtp = await db.findOneDocumentExists("internal", {
+            _id: new ObjectId(passwordData.id),
+            pwOtp: passwordData.otp,
+          });
+          if (checkOtp === false) {
+            return res.send({ status: 0, response: message.forgotOtpmismatched });
+          }
+          updatePassword = await db.findByIdAndUpdate("internal", passwordData.id, {
+            password: passwordData.password,
+            pwOtp: " ",
+          });
+          if (
+            updatePassword.modifiedCount !== 0 &&
+            updatePassword.matchedCount !== 0
+          ) {
+          //   await db.deleteOneDocument("sessionManagement", {
+          //     userId: new ObjectId(passwordData.id),
+          //   });
+          //   event.eventEmitterInsert.emit("insert", "cfsClone", {
+          //     originalId: passwordData.id,
+          //     actionType: "update",
+          //     data: passwordData,
+          //   });
 
-    //       return res.send({ status: 1, response: message.updatedSucess });
-    //     }
+            return res.send({ status: 1, response: message.updatedSucess });
+          }
 
-    //     return res.send(data);
-    //   }
+          return res.send(data);
+        }
 
       return res.send(data);
     } catch (error) {

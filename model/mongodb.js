@@ -11,7 +11,7 @@ const user = require('../schema/user')
 // const portHoliday = require('../schema/main/holiday')
 // const schedule = require('../schema/main/schedule')
 // const cfs = require('../schema/main/cfs')
-// const internal = require('../schema/main/internal')
+const internal = require('../schema/internal')
 // const rate = require('../schema/main/rate')
 // const booking = require('../schema/main/booking')
 // const originForwarder = require('../schema/main/originForwarder')
@@ -28,7 +28,7 @@ const { ObjectId } = require('bson')
 
 //DB Collection Schema
 const db = {
-  user
+  user,
 //   userDetail,
 //   country,
 //   costHeading,
@@ -37,7 +37,7 @@ const db = {
 //   portHoliday,
 //   schedule,
 //   cfs,
-//   internal,
+  internal,
 //   rate,
 //   booking,
 //   originForwarder,

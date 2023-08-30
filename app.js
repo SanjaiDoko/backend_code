@@ -2,8 +2,11 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const mongoose = require('mongoose')
 require("dotenv").config()
+const path = require("path")
+const fs = require('fs')
 const app = express()
 const server = require('http').createServer(app)
+const morgan = require('morgan')
 
 let options = {
     connectTimeoutMS: 30000,
@@ -23,50 +26,50 @@ mongoose.connection.on("connected", () => {
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-        res.setHeader('Access-Control-Allow-Credentials', true);
+        // res.setHeader('Access-Control-Allow-Credentials', true);
         next();
     });
-    app.use((err, req, res, next) => {
-        if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    // app.use((err, req, res, next) => {
+    //     if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
 
-            res.send({ response: "invalid JSON input" }) // Handling JSON parsing error
-        } else {
+    //         res.send({ response: "invalid JSON input" }) // Handling JSON parsing error
+    //     } else {
 
-            next(err); // Forwarding other errors to the next middleware
-        }
-    });
+    //         next(err); // Forwarding other errors to the next middleware
+    //     }
+    // });
     // app.use(compression()) // use compression middleware to compress and serve the static content
     // app.use("/fileuploads", express.static(path.join(__dirname, "/fileuploads"), { etag: false }))
 
-    // var accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' })
+    var accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' })
 
-    // setup the logger
-    // app.use(morgan(
-    //     function (tokens, req, res) {
+    //setup the logger
+    app.use(morgan(
+        function (tokens, req, res) {
 
-    //         if (tokens.method(req, res) == 'POST') {
-    //             return [
-    //                 tokens.method(req, res),
-    //                 tokens.url(req, res),
-    //                 tokens.status(req, res),
-    //                 tokens.res(req, res, 'content-length'), '-',
-    //                 JSON.stringify(req.body), '-',
-    //                 tokens['response-time'](req, res), 'ms',
-    //                 new Date().toJSON()
-    //             ].join(' ')
-    //         }
-    //         else {
-    //             return [
-    //                 tokens.method(req, res),
-    //                 tokens.url(req, res),
-    //                 tokens.status(req, res),
-    //                 tokens.res(req, res, 'content-length'), '-',
-    //                 tokens['response-time'](req, res), 'ms',
-    //                 new Date().toJSON()
-    //             ].join(' ')
-    //         }
+            if (tokens.method(req, res) == 'POST') {
+                return [
+                    tokens.method(req, res),
+                    tokens.url(req, res),
+                    tokens.status(req, res),
+                    tokens.res(req, res, 'content-length'), '-',
+                    JSON.stringify(req.body), '-',
+                    tokens['response-time'](req, res), 'ms',
+                    new Date().toJSON()
+                ].join(' ')
+            }
+            else {
+                return [
+                    tokens.method(req, res),
+                    tokens.url(req, res),
+                    tokens.status(req, res),
+                    tokens.res(req, res, 'content-length'), '-',
+                    tokens['response-time'](req, res), 'ms',
+                    new Date().toJSON()
+                ].join(' ')
+            }
 
-    //     }, { stream: accessLogStream }));
+        }, { stream: accessLogStream }));
 
     require("./routes/admin")(app);
     require("./routes/user")(app);
