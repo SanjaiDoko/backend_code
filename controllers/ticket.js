@@ -68,23 +68,23 @@ module.exports = () => {
       }
       ticketData = ticketData.data[0];
       ticketData.systemInfo = req.rawHeaders;
-      ticketData.startTime = moment(
-        ticketData.startTime,
-        "DD-MM-YYYYTHH:mm:ss"
-      );
-      ticketData.endTime = moment(ticketData.endTime, "DD-MM-YYYYTHH:mm:ss");
-      ticketData.actualEndTime = moment(
-        ticketData.actualEndTime,
-        "DD-MM-YYYYTHH:mm:ss"
-      );
-      if (ticketData.actualEndTime) {
-        ticketData.timeLog =
-          ticketData.actualEndTime.diff(ticketData.startTime, "hours") +
-          " hours";
-      } else {
-        ticketData.timeLog =
-          ticketData.endTime.diff(ticketData.startTime, "hours") + " hours";
-      }
+    //   ticketData.startTime = moment(
+    //     ticketData.startTime,
+    //     "DD-MM-YYYYTHH:mm:ss"
+    //   );
+    //   ticketData.endTime = moment(ticketData.endTime, "DD-MM-YYYYTHH:mm:ss");
+    //   ticketData.actualEndTime = moment(
+    //     ticketData.actualEndTime,
+    //     "DD-MM-YYYYTHH:mm:ss"
+    //   );
+    //   if (ticketData.actualEndTime) {
+    //     ticketData.timeLog =
+    //       ticketData.actualEndTime.diff(ticketData.startTime, "hours") +
+    //       " hours";
+    //   } else {
+    //     ticketData.timeLog =
+    //       ticketData.endTime.diff(ticketData.startTime, "hours") + " hours";
+    //   }
 
       insertTicket = await db.insertSingleDocument("ticket", ticketData);
 
