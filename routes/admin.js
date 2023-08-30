@@ -14,6 +14,7 @@ module.exports = (app) => {
 
     app.get("/user/getAllUsers", admin.getAllUsers);
     app.get("/user/getUsersById", admin.getAllUsers);
+    app.get("/users/getUserByGroupId", admin.getUsersByGroupId);
 
      //groups APIs
      app.get('/group/getAllGroups',  admin.getAllGroups) //rdt,admin

@@ -32,6 +32,10 @@ let userSchema = mongoose.Schema({
         type: String,
         trim: true
     },
+    groupId: {
+        type: ObjectId,
+        default:null,
+    },
     createdBy: {
         type: ObjectId
     },
