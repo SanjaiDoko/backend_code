@@ -10,4 +10,6 @@ module.exports = (app) => {
 
     app.post("/ticket/updateTicket", ticket.updateTicket)
 
+    app.post("/ticket/getAllRecievedTicketsByUserId", ticket.getAllRecievedTicketsByUserId)
+
 }
