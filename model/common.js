@@ -316,16 +316,16 @@ const downloadFileAzure = async (folderName, fileToDownload, type) => {
 };
 
 //Create Milestone Directory - createDir(fileuploadpath)
-const createDir = async (path) => {
-  await fs.mkdir(path, { recursive: true }, (err) => {
-    if (err) throw err;
-  });
-};
+// const createDir = async (path) => {
+//   await fs.mkdir(path, { recursive: true }, (err) => {
+//     if (err) throw err;
+//   });
+// };
 
 //Create Milestone File - createMilestoneFile(`${filePath}/${lclbookingId}/${fileName}`, base64Pdf, 'base64')
-const createFile = async (filePath, fileData, fileEncoding) => {
-  await fs.writeFile(filePath, fileData, { encoding: fileEncoding });
-};
+// const createFile = async (filePath, fileData, fileEncoding) => {
+//   await fs.writeFile(filePath, fileData, { encoding: fileEncoding });
+// };
 
 const hasDuplicates = (array) => {
   var valuesSoFar = [];
@@ -612,6 +612,17 @@ const checkAccess = function (role) {
     }
   };
 };
+
+
+const createDir = async(folderPath) => {
+      await fs.mkdir(folderPath);
+}
+
+const createFile =async (buffer, path, encodeType) => {
+     await fs.writeFile(buffer, path, encodeType)
+}
+
+
 
 module.exports = {
   uploadFileAzure,
