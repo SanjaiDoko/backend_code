@@ -68,27 +68,13 @@ module.exports = () => {
       }
       ticketData = ticketData.data[0];
       ticketData.systemInfo = req.rawHeaders;
-    //   ticketData.startTime = moment(
-    //     ticketData.startTime,
-    //     "DD-MM-YYYYTHH:mm:ss"
-    //   );
-    //   ticketData.endTime = moment(ticketData.endTime, "DD-MM-YYYYTHH:mm:ss");
-    //   ticketData.actualEndTime = moment(
-    //     ticketData.actualEndTime,
-    //     "DD-MM-YYYYTHH:mm:ss"
-    //   );
-    //   if (ticketData.actualEndTime) {
-    //     ticketData.timeLog =
-    //       ticketData.actualEndTime.diff(ticketData.startTime, "hours") +
-    //       " hours";
-    //   } else {
-    //     ticketData.timeLog =
-    //       ticketData.endTime.diff(ticketData.startTime, "hours") + " hours";
-    //   }
+
+      managerData = await db.findSingleDocument("user", {_id: new ObjectId(ticketData.managedBy)},{email:1,fullName:1})
+      ticketData.mailList = [managerData.email]
 
       insertTicket = await db.insertSingleDocument("ticket", ticketData);
 
-      managerData = await db.findSingleDocument("user", {_id: new ObjectId(ticketData.managedBy)},{email:1,fullName:1})
+      
 
       await ticketSendMail({
         emailTo: managerData.email,
@@ -227,6 +213,7 @@ module.exports = () => {
           $project: {
             _id: 1,
             managerName: '$managerDetails.fullName',
+            managerId: '$managerDetails._id',
             issueName: 1,
             type: 1,
             issueDescription: 1,
@@ -234,7 +221,8 @@ module.exports = () => {
             status: 1,
             createdAt: 1,
             issueGroup: 1,
-            assignedName: '$assignedDetails.fullName'
+            assignedName: '$assignedDetails.fullName',
+            assignedId: '$assignedDetails._id',
           }
         }
       ];
@@ -306,6 +294,8 @@ module.exports = () => {
             $project: {
               _id: 1,
               managerName: '$managerDetails.fullName',
+              managerId: '$managerDetails._id',
+              assignedId: '$assignedDetails._id',
               issueName: 1,
               type: 1,
               issueDescription: 1,
@@ -357,6 +347,8 @@ module.exports = () => {
             $project: {
               _id: 1,
               managerName: '$managerDetails.fullName',
+              managerId: '$managerDetails._id',
+              assignedId: '$assignedDetails._id',
               issueName: 1,
               type: 1,
               issueDescription: 1,

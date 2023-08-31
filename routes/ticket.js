@@ -6,9 +6,9 @@ module.exports = (app) => {
 
     app.post("/ticket/getTicketsByUserId", ticketValidation.checkId, ticket.getTicketsByUserId)
 
-    app.post("/ticket/insertTicket",  ticket.createTicket)
+    app.post("/ticket/insertTicket", ticketValidation.createTicket,  ticket.createTicket)
 
-    app.post("/ticket/updateTicket", ticket.updateTicket)
+    app.post("/ticket/updateTicket", ticketValidation.updateTicket, ticket.updateTicket)
 
     app.post("/ticket/getAllRecievedTicketsByUserId", ticket.getAllRecievedTicketsByUserId)
 
