@@ -14,4 +14,6 @@ module.exports = (app) => {
 
     app.post("/ticket/getAllRecievedTicketsByUserId", ticket.getAllRecievedTicketsByUserId)
 
+    app.post("/ticket/getTicketById", ticketValidation.checkId, ticket.getTicketById)
+
 }

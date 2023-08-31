@@ -29,6 +29,7 @@ mongoose.connection.on("connected", () => {
         res.setHeader('Access-Control-Allow-Credentials', true)
         next();
     });
+    app.set('trust proxy', 1) // trust first proxy
     // app.use((err, req, res, next) => {
     //     if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
 
@@ -39,7 +40,7 @@ mongoose.connection.on("connected", () => {
     //     }
     // });
     // app.use(compression()) // use compression middleware to compress and serve the static content
-    // app.use("/fileuploads", express.static(path.join(__dirname, "/fileuploads"), { etag: false }))
+    app.use("/fileuploads", express.static(path.join(__dirname, "/fileuploads"), { etag: false }))
 
     var accessLogStream = fs.createWriteStream(path.join(__dirname, 'access.log'), { flags: 'a' })
 

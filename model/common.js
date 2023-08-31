@@ -433,8 +433,13 @@ const loginParameter = async (model, loginData, res, req) => {
   privateKey = await fs.readFile("privateKey.key", "utf8");
   user = await db.findSingleDocument(model, {
     email: loginData.email,
-    status: 1,
+    status: 1
   });
+
+  if(loginData.type === 1 && user.groupId === null){
+    return res.send({status:0,response: "You are added any group, Please wait some time"})
+  }
+  
   if (user !== null && Object.keys(user).length !== 0) {
     if (user.password !== undefined) {
       // && (user.logoutTime === undefined || user.logoutTime !== null)
@@ -474,6 +479,8 @@ const loginParameter = async (model, loginData, res, req) => {
             data: JSON.stringify({
               userId: user._id,
               token: generatedToken,
+              groupId: user.groupId,
+              fullName: user.fullName
             }),
           });
         }
@@ -621,8 +628,6 @@ const createDir = async(folderPath) => {
 const createFile =async (buffer, path, encodeType) => {
      await fs.writeFile(buffer, path, encodeType)
 }
-
-
 
 module.exports = {
   uploadFileAzure,
