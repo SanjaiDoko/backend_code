@@ -69,8 +69,8 @@ module.exports.message = ({
     loginExceeded: "You\'ve reached maximum tries & Check Your Mail to Reset Password",
     hsnAddSucess: "Hsn Added SuccessFully",
     forgotOtpmismatched : "Request Failed, Please try again",
-    invalidCustomerId:"Customer Id is required"
-    
+    invalidCustomerId:"Customer Id is required",
+    ticketInserted:"Ticket Inserted Successfully"
 })
 
 
