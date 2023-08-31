@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 
 //Schema Imports
 const user = require('../schema/user')
+const group = require("../schema/group")
 // const userDetail = require('../schema/main/userDetail')
 // const country = require('../schema/main/country')
 // const costHeading = require('../schema/main/costHeading')
@@ -29,6 +30,7 @@ const { ObjectId } = require('bson')
 //DB Collection Schema
 const db = {
   user,
+  group,
 //   userDetail,
 //   country,
 //   costHeading,
@@ -188,7 +190,7 @@ const updateOneDocument = async (collection, filter, update) => {
   try {
     let result = await db[collection].updateOne(filter, update)
 
-    return result;
+    return result;5
   } catch (error) {
     console.error("Error updating document: ", error)
 
