@@ -338,5 +338,35 @@ module.exports = () => {
     }
   };
 
+  //Insert Feed Back
+  router.sendFeedBack = async (req, res) => {
+    let data = { status: 0, response: "Invalid request" },
+      feedBackData = req.body,
+      insertFeedBack;
+
+    try {
+      if (Object.keys(feedBackData).length === 0 && feedBackData.data === undefined) {
+        res.send(data);
+
+        return;
+      }
+      feedBackData = feedBackData.data[0];
+      feedBackData.systemInfo = req.rawHeaders;
+      // checkEmail = await db.findOneDocumentExists("user", {
+      //   email: userData.email,
+      // });
+      // if (checkEmail === true) {
+      //   return res.send({ status: 0, response: "Email already exists" });
+      // }
+      insertFeedBack = await db.insertSingleDocument("feedBack", feedBackData);
+      return res.send({
+        status: 1,
+        response: "FeedBack Sent successfully ",
+      });
+    } catch (error) {
+      return res.send(error.message);
+    }
+  };
+
   return router;
 };
