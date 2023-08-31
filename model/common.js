@@ -543,7 +543,7 @@ const checkUserInDB = async ({ userId, role, status, type }) => {
         status: status,
       });
     case 2:
-      return await db.findSingleDocument("cfs", {
+      return await db.findSingleDocument("internal", {
         _id: new ObjectId(userId),
         role: role,
         status: status,

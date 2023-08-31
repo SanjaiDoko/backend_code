@@ -26,7 +26,7 @@ module.exports = (app) => {
         
         app.post('/user/feedBack', userValidation.checkFeedBack, user.sendFeedBack)
 
-        // app.post('/user/updateStatus',  user.updateStatus)
+        app.post('/user/updateStatus',  user.updatedUserStatusById) 
 
         app.get("/crm",(req,res) => {
 

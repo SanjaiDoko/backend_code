@@ -23,10 +23,10 @@ mongoose.connection.on("connected", () => {
     app.use(bodyParser.urlencoded({ limit: "100mb", extended: true })) // Parse application/x-www-form-urlencoded
     app.use(bodyParser.json({ limit: "100mb", strict: true })) // bodyParser - Initializing/Configuration
     app.use(function(req, res, next) {
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-        // res.setHeader('Access-Control-Allow-Credentials', true);
+        res.setHeader('Access-Control-Allow-Origin', '*')
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+        res.setHeader('Access-Control-Allow-Credentials', true)
         next();
     });
     // app.use((err, req, res, next) => {
@@ -73,6 +73,7 @@ mongoose.connection.on("connected", () => {
 
     require("./routes/admin")(app);
     require("./routes/user")(app);
+    require("./routes/ticket")(app)
     /** HTTP Server Instance */
     try {
         server.listen(process.env.PORT, () => {

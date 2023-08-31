@@ -7,6 +7,7 @@ const path = require("path");
 const { message } = require("../model/message");
 const { ObjectId } = require("bson");
 const { default: mongoose } = require("mongoose");
+// const db = require('../model/mongodb')
 
 module.exports = () => {
   let router = {},
@@ -154,7 +155,34 @@ module.exports = () => {
   }
 
   //update Status
-  
+  router.updatedUserStatusById = async (req,res) => {
+    let data = { status: 0, response: message.inValid }
+
+    try {
+      let statusData = req.body, updateStatus, updateReason, userData, aggregationQuery
+
+      if (Object.keys(statusData).length === 0 && statusData.data === undefined) {
+
+        return res.send(data)
+      }
+      statusData = statusData.data[0]
+      if (!mongoose.isValidObjectId(statusData.id)) {
+
+        return res.send({ status: 0, response: message.invalidUserId })
+      }
+
+      updateStatus = await db.findByIdAndUpdate("user",statusData.id,{status: statusData.status})
+
+      if (updateStatus.modifiedCount !== 0 && updateStatus.matchedCount !== 0) {
+        return res.send({status:1, response: "Updated Successfully"})
+      }
+
+      return res.send(data)
+    } catch (error) {
+      logger.error(`Error in user controller - updateuserstatusById: ${error.message}`)
+      res.send(error.message)
+    }
+  }
 
   //Forgot Password
   router.forgotPassword = async (req, res) => {
