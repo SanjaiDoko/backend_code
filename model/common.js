@@ -463,7 +463,9 @@ const loginParameter = async (model, loginData, res, req) => {
           { algorithm: "RS256" }
         );
         res.setHeader("Authorization", "Bearer " + generatedToken);
-
+        // if(user.groupId === null){
+        //   res.send({ status: 0, response: "You are Not Added In Any Group" })
+        // }
         loginTime = Date.now();
         updateLogIn = await db.updateOneDocument(
           model,
@@ -478,6 +480,8 @@ const loginParameter = async (model, loginData, res, req) => {
             response: message.login,
             data: JSON.stringify({
               userId: user._id,
+              // groupId: user.groupId,
+              // fullName:user.fullName,
               token: generatedToken,
               groupId: user.groupId,
               fullName: user.fullName

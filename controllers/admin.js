@@ -136,6 +136,7 @@ module.exports = () => {
         { _id: new ObjectId(groupData.managedBy) },
         { role: 3 }
       );
+
       updateUser = await db.updateOneDocument(
         "user",
         { _id: new ObjectId(groupData.managedBy) },
@@ -176,11 +177,11 @@ module.exports = () => {
 
   //Update Group
   router.updateGroup = async (req, res) => {
-    let data = { status: 0, response: message.inValid };
+    let data = { status: 0, response: message.inValid },users, updateUser,updateGroup
 
     try {
-      let groupData = req.body,
-        updateGroup;
+      let groupData = req.body
+        
 
       if (Object.keys(groupData).length === 0 && groupData.data === undefined) {
         res.send(data);
@@ -188,6 +189,8 @@ module.exports = () => {
         return;
       }
       groupData = groupData.data[0];
+
+      users = groupData.users
       // if (!mongoose.isValidObjectId(groupData.createdBy)) {
 
       //   return res.send({ status: 0, response: message.invalidUserId })
@@ -203,6 +206,16 @@ module.exports = () => {
         { _id: new ObjectId(groupData.id) },
         groupData
       );
+
+      for (let i = 0; i < users.length; i++) {
+        await db.updateOneDocument(
+          "user",
+          { _id: new ObjectId(users[i]) },
+          { groupId: groupData.id }
+        );
+      }   
+
+
 
       if (updateGroup) {
         // event.eventEmitterInsert.emit(
@@ -301,7 +314,7 @@ module.exports = () => {
         return res.send({ status: 0, response: message.invalidUserId })
       }
 
-       userData = await db.findDocuments("user", { groupId: new ObjectId(groupId) },{_id:1, fullName:1,role:1,})
+       userData = await db.findDocuments("user", { groupId: new ObjectId(groupId) },{_id:1, fullName:1,role:1,groupId:1})
 
       // if (groupData) {
       //   return res.send({ status: 1, data: JSON.stringify(groupData) });

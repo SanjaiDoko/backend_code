@@ -143,6 +143,7 @@ module.exports = () => {
 
       if (loginData.type === 1) {
         //Type 1 - User Schema
+        
         common.loginParameter("user", loginData, res, req);
       } else if (loginData.type === 2) {
         //Type 2 - Internal Schema
