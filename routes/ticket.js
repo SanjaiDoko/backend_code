@@ -4,8 +4,6 @@ module.exports = (app) => {
 
     const ticketValidation = require("../validation/ticket/ticketValidation")()
 
-    app.get("/ticket/getAllTickets", ticketValidation.checkId, ticket.getAllTickets)
-
     app.post("/ticket/getTicketsByUserId", ticketValidation.checkId, ticket.getTicketsByUserId)
 
     app.post("/ticket/insertTicket", ticketValidation.createTicket,  ticket.createTicket)

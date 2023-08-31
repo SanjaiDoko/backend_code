@@ -109,6 +109,10 @@ module.exports = () => {
         return res.send({ status: 0, response: message.invalidId });
       }
 
+      if(ticketData.endTime){
+        ticketData.endTime = moment(ticketData.endTime,"DD-MM-YYYYTHH:mm:ss")
+      }
+
       if(ticketData.assignedTo){
         assignedNameData = await db.findSingleDocument("user", {_id: new ObjectId(ticketData.assignedTo)},{email:1,fullName:1})
         ticketData.startTime = moment().format('MM-DD-YYYY')
@@ -217,10 +221,6 @@ module.exports = () => {
       res.send(data);
     }
   };
-
-  router.getAllTickets = async (req,res) => {
-
-  }
 
   router.getAllRecievedTicketsByUserId = async (req, res) => {
     let data = { status: 0, response: message.inValid },
