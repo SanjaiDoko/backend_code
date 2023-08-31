@@ -111,11 +111,11 @@ module.exports = () => {
 
       if(ticketData.assignedTo){
         assignedNameData = await db.findSingleDocument("user", {_id: new ObjectId(ticketData.assignedTo)},{email:1,fullName:1})
-        ticketData.startTime = moment().format('DD-MM-YYYY HH:mm')
+        ticketData.startTime = moment().format('MM-DD-YYYY')
         await ticketSendMail({
-            emailTo: managerData.email,
-            fullName: managerData.fullName,
-            url: "http://localhost:5173/change-password/" + managerData._id + "/2",
+            emailTo: assignedNameData.email,
+            fullName: assignedNameData.fullName,
+            url: "http://localhost:5173/change-password/" + assignedNameData._id + "/2",
           });
         ticketData.status = 2
       }

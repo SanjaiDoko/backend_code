@@ -223,8 +223,8 @@ const findOneAndUpdate = async (collection, filter, update) => {
 
     return updatedDoc;
   }
-  catch {
-    console.error("Error finding one and updating document: ", error)
+  catch (error) {
+    console.error("Error finding one and updating document: ", error.message)
 
     throw error;
   }
