@@ -434,6 +434,8 @@ const loginParameter = async (model, loginData, res, req) => {
   user = await db.findSingleDocument(model, {
     email: loginData.email,
     status: 1,
+    groupId:1,
+    fullName:1
   });
   if (user !== null && Object.keys(user).length !== 0) {
     if (user.password !== undefined) {
@@ -458,7 +460,9 @@ const loginParameter = async (model, loginData, res, req) => {
           { algorithm: "RS256" }
         );
         res.setHeader("Authorization", "Bearer " + generatedToken);
-
+        // if(user.groupId === null){
+        //   res.send({ status: 0, response: "You are Not Added In Any Group" })
+        // }
         loginTime = Date.now();
         updateLogIn = await db.updateOneDocument(
           model,
@@ -473,6 +477,8 @@ const loginParameter = async (model, loginData, res, req) => {
             response: message.login,
             data: JSON.stringify({
               userId: user._id,
+              // groupId: user.groupId,
+              // fullName:user.fullName,
               token: generatedToken,
             }),
           });
