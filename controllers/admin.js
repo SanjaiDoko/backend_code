@@ -36,10 +36,41 @@ module.exports = () => {
     }
   };
 
+  //get User By Id
+  router.getUserById = async (req, res) => {
+    let data = { status: 0, response: message.inValid },
+      userId, userData;
+
+      try {
+        userId = req.body
+        if (Object.keys(userId).length === 0 && userId.data === undefined) {
+          res.send(data)
+  
+          return
+        }
+        userId = userId.data[0]
+        if (!mongoose.isValidObjectId(userId.id)) {
+  
+          return res.send({ status: 0, response: message.invalidUserId })
+        }
+        userData = await db.findSingleDocument("user", { _id: new ObjectId(userId.id) },{_id:1, fullName:1})
+      if (userData !== null && Object.keys(userData).length !== 0) {
+
+        return res.send({ status: 1, data: userData })
+      }
+  
+        return res.send(data)
+      } catch (error) {
+        // logger.error(`Error in user controller - getUserEmailbyId: ${error.message}`)
+        res.send(error.message)
+      }
+  };
+
   //get all Groupa
   router.getAllGroups = async (req, res) => {
     let data = { status: 0, response: message.inValid },
       groupData;
+      groupDataArray = []
 
     try {
       groupData = await db.findAndSelect(
@@ -47,8 +78,25 @@ module.exports = () => {
         { status: { $in: [1] } },
         { _id: 1, name: 1, managedBy: 1, users: 1, status: 1 }
       );
-      if (groupData) {
-        return res.send({ status: 1, data: JSON.stringify(groupData) });
+
+      for (let i = 0; i < groupData.length; i++) {
+        let singleGroupData = {}
+        singleGroupData.groupId = `${groupData[i]._doc._id}`
+        singleGroupData.name = `${groupData[i]._doc.name}`
+        singleGroupData.status = `${groupData[i]._doc.status}`
+        let data = await db.findDocuments("user", { groupId: new ObjectId(groupData[i]._doc._id) },{_id:1, fullName:1,role:1})
+        // Filter documents with role 3 = managedBy
+        const managedBy = data.filter(doc => doc.role === 3);
+        singleGroupData.managedBy = {name:managedBy[0]?.fullName, managedBy:managedBy[0]?._id}
+        // Filter documents with role 1
+        const users = data.filter(doc => doc.role === 1);
+        singleGroupData.users = users
+        groupDataArray = [...groupDataArray, singleGroupData]
+      }
+
+      if (groupDataArray) {
+        console.log(groupDataArray)
+        return res.send({ status: 1, data: JSON.stringify(groupDataArray) });
       }
     } catch (error) {
       // console.log(`Error in country controller - getCountryList: ${error.message}`)
@@ -73,6 +121,7 @@ module.exports = () => {
 
         return;
       }
+
       groupData = groupData.data[0];
       // if (!mongoose.isValidObjectId(groupData.createdBy)) {
 
@@ -179,37 +228,93 @@ module.exports = () => {
     }
   };
 
-   // Get Users By GroupId
-   router.getUsersByGroupId = async (req, res) => {
-    let data = { status: 0, response: message.inValid }, idData, userData
+  //Remove User From Group
+  router.removeUserFromGroup = async (req, res) => {
+    let data = { status: 0, response: message.inValid };
 
     try {
-        idData = req.body
+      let userData = req.body,
+        updateUser;
 
-        if (Object.keys(idData).length === 0 && idData.data === undefined) {
-            res.send(data)
+      if (Object.keys(userData).length === 0 && userData.data === undefined) {
+        res.send(data);
 
-            return
-        }
-        idData = idData.data[0]
-        if (!mongoose.isValidObjectId(idData.id)) {
+        return;
+      }
+      userData = userData.data[0];
+      // if (!mongoose.isValidObjectId(groupData.createdBy)) {
 
-            return res.send({ status: 0, response: message.invalidScheduleId })
-        }
+      //   return res.send({ status: 0, response: message.invalidUserId })
+      // }
 
-        userData = await db.findDocuments('booking', { scheduleId: new ObjectId(idData.id) })
+      if (!mongoose.isValidObjectId(userData.id)) {
+        return res.send({ status: 0, response: message.invalidId });
+      }
+      userData.systemInfo = req.rawHeaders;
 
-        if (userData.length !== 0) {
+      updateUser = await db.updateOneDocument(
+        "user",
+        { _id: new ObjectId(userData.id) },
+        { groupId: null }
+      );
 
-            return res.send({ status: 1, data: JSON.stringify(userData) })
-        }
+      if (updateUser) {
+        // event.eventEmitterInsert.emit(
+        //   'insert',
+        //   'countryClone',
+        //   {
+        //     "originalId": insertCountry._doc._id,
+        //     "actionType": 'insert',
+        //     "data": insertCountry._doc
+        //   }
+        // )
 
-        return res.send({ status: 1, data: "[]" })
+        return res.send({ status: 1, response: message.removeUserGroupSucess });
+      }
     } catch (error) {
-        logger.error(`Error in bokingmanagement controller - getBookingsbyScheduleId: ${error.message}`)
-        res.send(error.message)
+      // logger.error(`Error in group controller - insertGroup: ${error.message}`)
+      if (error.code === 11000) {
+        data.response = "Duplicates found";
+      } else {
+        data.response = error.message;
+      }
+      res.send(data);
     }
-}
+  };
+
+  // Get Users By GroupId
+  router.getUsersByGroupId = async (req, res) => {
+    let data = { status: 0, response: message.inValid },
+      groupId,
+      resData = null,
+      userData;
+
+    try {
+      groupId = await db.findAndSelect(
+        "group",
+        { status: { $in: [1] } },
+        { _id: 1 }
+      );
+      if (groupData) {
+        return res.send({ status: 1, data: JSON.stringify(groupData) });
+      }
+
+      userData = await db.findDocuments(
+        "user",
+        { groupId: new ObjectId(idData.id), role: { $in: [1, 3] } },
+        { fullName: 1 }
+      );
+
+      if (userData.length !== 0) {
+        return res.send({ status: 1, data: JSON.stringify(userData) });
+      }
+
+      return res.send({ status: 1, data: "[]" });
+    } catch (error) {
+      // logger.error(`Error in bokingmanagement controller - getBookingsbyScheduleId: ${error.message}`)
+      res.send(error.message);
+    }
+  };
 
   router.registration = async (req, res) => {
     let data = { status: 0, response: "Invalid request" },

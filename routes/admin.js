@@ -13,13 +13,14 @@ module.exports = (app) => {
     const groupValidation = require("../validation/admin/groupValidation")()
 
     app.get("/user/getAllUsers", admin.getAllUsers);
-    app.get("/user/getUsersById", admin.getAllUsers);
-    app.get("/users/getUserByGroupId", admin.getUsersByGroupId);
+    app.get("/user/getUsersById", admin.getUserById);
+    app.get("/user/getUserByGroupId", admin.getUsersByGroupId);
 
      //groups APIs
      app.get('/group/getAllGroups',  admin.getAllGroups) //rdt,admin
      app.post('/group/insertGroup', groupValidation.insertGroup, admin.insertGroup) //admin
      app.post('/group/updateGroup',   groupValidation.updateGroup, admin.updateGroup) //admin
+     app.post('/group/removeUserById',   admin.removeUserFromGroup) //admin
     
 
     // app.post("/admin/register", admin.registration)
