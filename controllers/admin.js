@@ -1,74 +1,156 @@
 const { default: mongoose } = require("mongoose");
-const common = require("../model/common")
-const { message } = require("../model/message")
-const db = require('../model/mongodb');
+const common = require("../model/common");
+const { message } = require("../model/message");
+const db = require("../model/mongodb");
+const { ObjectId } = require("bson");
 
 module.exports = () => {
-    let router = {}
+  let router = {};
 
-    router.getAllUsers = async (req,res) => {
-        let data = { status: 0, response: message.inValid }, usersData
+  router.getAllUsers = async (req, res) => {
+    let data = { status: 0, response: message.inValid },
+      usersData;
 
-        try {
-          usersData = await db.findAndSelect("user", { status: { $in: [1, 2] } }, { _id: 1, fullName: 1, mobileNumber: 1, email: 1, createdAt: 1, status:1 })
-          if (usersData) {
-    
-            return res.send({ status: 1, data: JSON.stringify(usersData) })
-          }
-        } catch (error) {
-          console.log(`Error in country controller - getCountryList: ${error.message}`)
-          data.response = error.message
-          res.send(data)
+    try {
+      usersData = await db.findAndSelect(
+        "user",
+        { status: { $in: [1, 2] } },
+        {
+          _id: 1,
+          fullName: 1,
+          mobileNumber: 1,
+          email: 1,
+          createdAt: 1,
+          status: 1,
         }
+      );
+      if (usersData) {
+        return res.send({ status: 1, data: JSON.stringify(usersData) });
+      }
+    } catch (error) {
+      console.log(
+        `Error in country controller - getCountryList: ${error.message}`
+      );
+      data.response = error.message;
+      res.send(data);
     }
- //get all Groupa
-    router.getAllGroups = async (req,res) => {
-      let data = { status: 0, response: message.inValid }, groupData
+  };
+
+  //get User By Id
+  router.getUserById = async (req, res) => {
+    let data = { status: 0, response: message.inValid },
+      userId, userData;
 
       try {
-        groupData = await db.findAndSelect("group", { status: { $in: [1] } }, { _id: 1, name: 1, managedBy: 1, users: 1, status: 1 })
-        if (groupData) {
+        userId = req.body
+        if (Object.keys(userId).length === 0 && userId.data === undefined) {
+          res.send(data)
   
-          return res.send({ status: 1, data: JSON.stringify(groupData) })
+          return
         }
-      } catch (error) {
-        // console.log(`Error in country controller - getCountryList: ${error.message}`)
-        data.response = error.message
-        res.send(data)
+        userId = userId.data[0]
+        if (!mongoose.isValidObjectId(userId.id)) {
+  
+          return res.send({ status: 0, response: message.invalidUserId })
+        }
+        userData = await db.findSingleDocument("user", { _id: new ObjectId(userId.id) },{_id:1, fullName:1})
+      if (userData !== null && Object.keys(userData).length !== 0) {
+
+        return res.send({ status: 1, data: userData })
       }
-  }
+  
+        return res.send(data)
+      } catch (error) {
+        // logger.error(`Error in user controller - getUserEmailbyId: ${error.message}`)
+        res.send(error.message)
+      }
+  };
+
+  //get all Groupa
+  router.getAllGroups = async (req, res) => {
+    let data = { status: 0, response: message.inValid },
+      groupData;
+      groupDataArray = []
+
+    try {
+      groupData = await db.findAndSelect(
+        "group",
+        { status: { $in: [1] } },
+        { _id: 1, name: 1, managedBy: 1, users: 1, status: 1 }
+      );
+
+      for (let i = 0; i < groupData.length; i++) {
+        let singleGroupData = {}
+        singleGroupData.groupId = `${groupData[i]._doc._id}`
+        singleGroupData.name = `${groupData[i]._doc.name}`
+        singleGroupData.status = `${groupData[i]._doc.status}`
+        let data = await db.findDocuments("user", { groupId: new ObjectId(groupData[i]._doc._id) },{_id:1, fullName:1,role:1})
+        // Filter documents with role 3 = managedBy
+        const managedBy = data.filter(doc => doc.role === 3);
+        singleGroupData.managedBy = {name:managedBy[0]?.fullName, managedBy:managedBy[0]?._id}
+        // Filter documents with role 1
+        const users = data.filter(doc => doc.role === 1);
+        singleGroupData.users = users
+        groupDataArray = [...groupDataArray, singleGroupData]
+      }
+
+      if (groupDataArray) {
+        console.log(groupDataArray)
+        return res.send({ status: 1, data: JSON.stringify(groupDataArray) });
+      }
+    } catch (error) {
+      // console.log(`Error in country controller - getCountryList: ${error.message}`)
+      data.response = error.message;
+      res.send(data);
+    }
+  };
 
   //insert Group
   router.insertGroup = async (req, res) => {
-    let data = { status: 0, response: message.inValid }
+    let data = { status: 0, response: message.inValid };
 
     try {
-      let groupData = req.body,  insertGroup, updateManagerBy, users, updateUser
+      let groupData = req.body,
+        insertGroup,
+        updateManagerBy,
+        users,
+        updateUser;
 
       if (Object.keys(groupData).length === 0 && groupData.data === undefined) {
-        res.send(data)
+        res.send(data);
 
-        return
+        return;
       }
-      groupData = groupData.data[0]
+
+      groupData = groupData.data[0];
       // if (!mongoose.isValidObjectId(groupData.createdBy)) {
 
       //   return res.send({ status: 0, response: message.invalidUserId })
       // }
-      groupData.systemInfo = req.rawHeaders
-      
-      insertGroup = await db.insertSingleDocument("group", groupData)
-      // updateManagerBy = await db.updateOneDocument("user", { _id: new ObjectId(groupData.managedBy) }, {role: 3})
-      // users = groupData.users
-      
-      // for(let i=0;  i<users.length; i++){
-      //   updateManagerBy = await db.updateOneDocument("user", { _id: new ObjectId(users[i]) }, )
+      groupData.systemInfo = req.rawHeaders;
 
-      // }
+      users = groupData.users;
+      insertGroup = await db.insertSingleDocument("group", groupData);
+      updateManagerBy = await db.updateOneDocument(
+        "user",
+        { _id: new ObjectId(groupData.managedBy) },
+        { role: 3 }
+      );
+      updateUser = await db.updateOneDocument(
+        "user",
+        { _id: new ObjectId(groupData.managedBy) },
+        { groupId: insertGroup._doc._id }
+      );
 
+      for (let i = 0; i < users.length; i++) {
+        await db.updateOneDocument(
+          "user",
+          { _id: new ObjectId(users[i]) },
+          { groupId: insertGroup._doc._id }
+        );
+      }
 
-
-      if (insertGroup) {
+      if (insertGroup && updateManagerBy) {
         // event.eventEmitterInsert.emit(
         //   'insert',
         //   'countryClone',
@@ -79,45 +161,48 @@ module.exports = () => {
         //   }
         // )
 
-        return res.send({ status: 1, response: message.addedGroupSucess })
+        return res.send({ status: 1, response: message.addedGroupSucess });
       }
     } catch (error) {
       // logger.error(`Error in group controller - insertGroup: ${error.message}`)
       if (error.code === 11000) {
-        data.response = "Duplicates found"
+        data.response = "Duplicates found";
+      } else {
+        data.response = error.message;
       }
-      else {
-        data.response = error.message
-      }
-      res.send(data)
+      res.send(data);
     }
-  }
+  };
 
   //Update Group
   router.updateGroup = async (req, res) => {
-    let data = { status: 0, response: message.inValid }
+    let data = { status: 0, response: message.inValid };
 
     try {
-      let groupData = req.body,  updateGroup
+      let groupData = req.body,
+        updateGroup;
 
       if (Object.keys(groupData).length === 0 && groupData.data === undefined) {
-        res.send(data)
+        res.send(data);
 
-        return
+        return;
       }
-      groupData = groupData.data[0]
+      groupData = groupData.data[0];
       // if (!mongoose.isValidObjectId(groupData.createdBy)) {
 
       //   return res.send({ status: 0, response: message.invalidUserId })
       // }
 
       if (!mongoose.isValidObjectId(groupData.id)) {
-
-        return res.send({ status: 0, response: message.invalidId })
+        return res.send({ status: 0, response: message.invalidId });
       }
-      groupData.systemInfo = req.rawHeaders      
-      
-      updateGroup = await db.updateOneDocument("group", { _id: new ObjectId(groupData.id) }, groupData)
+      groupData.systemInfo = req.rawHeaders;
+
+      updateGroup = await db.updateOneDocument(
+        "group",
+        { _id: new ObjectId(groupData.id) },
+        groupData
+      );
 
       if (updateGroup) {
         // event.eventEmitterInsert.emit(
@@ -130,51 +215,138 @@ module.exports = () => {
         //   }
         // )
 
-        return res.send({ status: 1, response: message.updateGroupSucess })
+        return res.send({ status: 1, response: message.updateGroupSucess });
       }
     } catch (error) {
       // logger.error(`Error in group controller - insertGroup: ${error.message}`)
       if (error.code === 11000) {
-        data.response = "Duplicates found"
+        data.response = "Duplicates found";
+      } else {
+        data.response = error.message;
       }
-      else {
-        data.response = error.message
-      }
-      res.send(data)
+      res.send(data);
     }
-  }
+  };
 
-    router.registration = async (req, res) => {
-      let data = { status: 0, response: "Invalid request" },
-        userData = req.body,
-        checkEmail,
-        insertUser;
-  
-      try {
-        if (Object.keys(userData).length === 0 && userData.data === undefined) {
-          res.send(data);
-  
-          return;
-        }
-        userData = userData.data[0];
-        userData.systemInfo = req.rawHeaders;
-        userData.password = bcrypt.hashSync(userData.password, 10);
-        checkEmail = await db.findOneDocumentExists("internal", {
-          email: userData.email,
-        });
-        if (checkEmail === true) {
-          return res.send({ status: 0, response: "Email already exists" });
-        }
-        insertUser = await db.insertSingleDocument("internal", userData);
-        return res.send({
-          status: 1,
-          data: insertUser._id,
-          response: "Registration successfully completed",
-        });
-      } catch (error) {
-        return res.send(error.message);
+  //Remove User From Group
+  router.removeUserFromGroup = async (req, res) => {
+    let data = { status: 0, response: message.inValid };
+
+    try {
+      let userData = req.body,
+        updateUser;
+
+      if (Object.keys(userData).length === 0 && userData.data === undefined) {
+        res.send(data);
+
+        return;
       }
-    };
+      userData = userData.data[0];
+      // if (!mongoose.isValidObjectId(groupData.createdBy)) {
 
-    return router
-}
+      //   return res.send({ status: 0, response: message.invalidUserId })
+      // }
+
+      if (!mongoose.isValidObjectId(userData.id)) {
+        return res.send({ status: 0, response: message.invalidId });
+      }
+      userData.systemInfo = req.rawHeaders;
+
+      updateUser = await db.updateOneDocument(
+        "user",
+        { _id: new ObjectId(userData.id) },
+        { groupId: null }
+      );
+
+      if (updateUser) {
+        // event.eventEmitterInsert.emit(
+        //   'insert',
+        //   'countryClone',
+        //   {
+        //     "originalId": insertCountry._doc._id,
+        //     "actionType": 'insert',
+        //     "data": insertCountry._doc
+        //   }
+        // )
+
+        return res.send({ status: 1, response: message.removeUserGroupSucess });
+      }
+    } catch (error) {
+      // logger.error(`Error in group controller - insertGroup: ${error.message}`)
+      if (error.code === 11000) {
+        data.response = "Duplicates found";
+      } else {
+        data.response = error.message;
+      }
+      res.send(data);
+    }
+  };
+
+  // Get Users By GroupId
+  router.getUsersByGroupId = async (req, res) => {
+    let data = { status: 0, response: message.inValid },
+      groupId,
+      resData = null,
+      userData;
+
+    try {
+      groupId = await db.findAndSelect(
+        "group",
+        { status: { $in: [1] } },
+        { _id: 1 }
+      );
+      if (groupData) {
+        return res.send({ status: 1, data: JSON.stringify(groupData) });
+      }
+
+      userData = await db.findDocuments(
+        "user",
+        { groupId: new ObjectId(idData.id), role: { $in: [1, 3] } },
+        { fullName: 1 }
+      );
+
+      if (userData.length !== 0) {
+        return res.send({ status: 1, data: JSON.stringify(userData) });
+      }
+
+      return res.send({ status: 1, data: "[]" });
+    } catch (error) {
+      // logger.error(`Error in bokingmanagement controller - getBookingsbyScheduleId: ${error.message}`)
+      res.send(error.message);
+    }
+  };
+
+  router.registration = async (req, res) => {
+    let data = { status: 0, response: "Invalid request" },
+      userData = req.body,
+      checkEmail,
+      insertUser;
+
+    try {
+      if (Object.keys(userData).length === 0 && userData.data === undefined) {
+        res.send(data);
+
+        return;
+      }
+      userData = userData.data[0];
+      userData.systemInfo = req.rawHeaders;
+      userData.password = bcrypt.hashSync(userData.password, 10);
+      checkEmail = await db.findOneDocumentExists("internal", {
+        email: userData.email,
+      });
+      if (checkEmail === true) {
+        return res.send({ status: 0, response: "Email already exists" });
+      }
+      insertUser = await db.insertSingleDocument("internal", userData);
+      return res.send({
+        status: 1,
+        data: insertUser._id,
+        response: "Registration successfully completed",
+      });
+    } catch (error) {
+      return res.send(error.message);
+    }
+  };
+
+  return router;
+};

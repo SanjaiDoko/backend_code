@@ -192,7 +192,7 @@ const updateOneDocument = async (collection, filter, update) => {
   try {
     let result = await db[collection].updateOne(filter, update)
 
-    return result;
+    return result;5
   } catch (error) {
     console.error("Error updating document: ", error)
 

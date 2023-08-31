@@ -8,12 +8,11 @@ let groupSchema = mongoose.Schema({
         trim: true
     },
     managedBy: {
-        type: String,
+        type: ObjectId,
         require: true,
-        trim: true
     },
     users: {
-        type: String,
+        type: Array,
         trim: true
     },
     status: {
