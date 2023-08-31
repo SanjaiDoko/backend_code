@@ -93,7 +93,7 @@ module.exports = () => {
   router.updateTicket = async (req, res) => {
     let data = { status: 0, response: message.inValid },
       ticketData = req.body,
-      updateTicket;
+      updateTicket, assignedNameData
 
     try {
       if (
@@ -109,41 +109,23 @@ module.exports = () => {
         return res.send({ status: 0, response: message.invalidId });
       }
 
-      ticketData.systemInfo = req.rawHeaders;
-
-      ticketData.systemInfo = req.rawHeaders;
-      ticketData.startTime = moment(
-        ticketData.startTime,
-        "DD-MM-YYYYTHH:mm:ss"
-      );
-      ticketData.endTime = moment(ticketData.endTime, "DD-MM-YYYYTHH:mm:ss");
-      ticketData.actualEndTime = moment(
-        ticketData.actualEndTime,
-        "DD-MM-YYYYTHH:mm:ss"
-      );
-      if (ticketData.actualEndTime) {
-        ticketData.timeLog =
-          ticketData.actualEndTime.diff(ticketData.startTime, "hours") +
-          " hours";
-      } else {
-        ticketData.timeLog =
-          ticketData.endTime.diff(ticketData.startTime, "hours") + " hours";
+      if(ticketData.assignedTo){
+        assignedNameData = await db.findSingleDocument("user", {_id: new ObjectId(ticketData.assignedTo)},{email:1,fullName:1})
+        ticketData.startTime = moment().format('DD-MM-YYYY HH:mm')
+        await ticketSendMail({
+            emailTo: managerData.email,
+            fullName: managerData.fullName,
+            url: "http://localhost:5173/change-password/" + managerData._id + "/2",
+          });
+        ticketData.status = 2
       }
-      updateTicket = await db.updateOneDocument(
+
+      updateTicket = await db.findOneAndUpdate(
         "ticket",
-        { _id: new ObjectId(ticketData.id), status: { $in: [1, 2] } },
+        { _id: new ObjectId(ticketData.id), status: { $in: [1, 2, 0] } },
         ticketData
       );
       if (updateTicket.modifiedCount !== 0 && updateTicket.matchedCount !== 0) {
-        // event.eventEmitterInsert.emit(
-        //   'insert',
-        //   'countryClone',
-        //   {
-        //     "originalId": ticketData.id,
-        //     "actionType": 'update',
-        //     "data": ticketData
-        //   }
-        // )
 
         return res.send({ status: 1, response: message.updatedSucess });
       } else {
@@ -154,12 +136,6 @@ module.exports = () => {
         `Error in ticket controller - updateTicket: ${error.message}`
       );
       data.response = error.message;
-      //   if (error.code === 11000) {
-      //     data.response = "Duplicates found"
-      //   }
-      //   else {
-      //     data.response = error.message
-      //   }
       res.send(data);
     }
   };
@@ -182,7 +158,7 @@ module.exports = () => {
       if (!mongoose.isValidObjectId(ticketData.id)) {
         return res.send({ status: 0, response: message.invalidId });
       }
-      condition = { createdBy: new ObjectId(ticketData.id), status: { $in: [1, 2] } }
+      condition = { createdBy: new ObjectId(ticketData.id), status: { $in: [1, 2, 0] } }
       const aggregationQuery = [
         {
           $lookup: {
@@ -223,11 +199,10 @@ module.exports = () => {
             issueGroup: 1,
             assignedName: '$assignedDetails.fullName',
             assignedId: '$assignedDetails._id',
+            mailList: 1
           }
         }
       ];
-      
-
       
       ticketsData = await db.getAggregation('ticket', aggregationQuery)
  
@@ -243,10 +218,14 @@ module.exports = () => {
     }
   };
 
+  router.getAllTickets = async (req,res) => {
+
+  }
+
   router.getAllRecievedTicketsByUserId = async (req, res) => {
     let data = { status: 0, response: message.inValid },
       ticketData = req.body,
-      ticketsData;
+      ticketsData, condition
 
     try {
       if (
@@ -261,7 +240,7 @@ module.exports = () => {
       if (!mongoose.isValidObjectId(ticketData.id)) {
         return res.send({ status: 0, response: message.invalidId });
       }
-      if (ticketData.role === 1) {
+      
         condition = { assignedTo: new ObjectId(ticketData.id), status: { $in: [1, 2] } }
 
         const aggregationQuery = [
@@ -303,85 +282,104 @@ module.exports = () => {
               status: 1,
               createdAt: 1,
               issueGroup: 1,
-              assignedName: '$assignedDetails.fullName'
+              assignedName: '$assignedDetails.fullName',
+              mailList: 1
             }
           }
         ];
               
         ticketsData = await db.getAggregation('ticket', aggregationQuery)
-        // ticketsData = await db.findAndSelect(
-        //   "ticket",
-        //   { assignedTo: new ObjectId(ticketData.id), status: { $in: [1, 2] } },
-        //   { systemInfo: 0, updatedAt: 0 }
-        // );
-      } else if (ticketData.role === 3) {
-        condition = { managedBy: new ObjectId(ticketData.id), status: { $in: [1, 2] } }
-
-        const aggregationQuery = [
-          {
-            $lookup: {
-              from: "users",
-              localField: "managedBy",
-              foreignField: "_id",
-              as: "managerDetails"
-            }
-          },
-          {
-            $unwind: "$managerDetails"
-          },
-          {
-            $lookup: {
-              from: "users",
-              localField: "assignedTo",
-              foreignField: "_id",
-              as: "assignedDetails"
-            }
-          },
-          {
-            $unwind: { path: "$assignedDetails", preserveNullAndEmptyArrays: true }
-          },
-          {
-            $match: condition
-          },
-          {
-            $project: {
-              _id: 1,
-              managerName: '$managerDetails.fullName',
-              managerId: '$managerDetails._id',
-              assignedId: '$assignedDetails._id',
-              issueName: 1,
-              type: 1,
-              issueDescription: 1,
-              mailList: 1,
-              status: 1,
-              createdAt: 1,
-              issueGroup: 1,
-              assignedName: '$assignedDetails.fullName'
-            }
-          }
-        ];
-              
-        ticketsData = await db.getAggregation('ticket', aggregationQuery)
-        // ticketsData = await db.findAndSelect(
-        //   "ticket",
-        //   { managedBy: new ObjectId(ticketData.id), status: { $in: [1, 2] } },
-        //   { systemInfo: 0, updatedAt: 0 }
-        // );
-      } else {
-        return res.send({ status: 0, response: "Invalid role" });
-      }
 
       if (ticketsData) {
         return res.send({ status: 1, data: JSON.stringify(ticketsData) });
       }
     } catch (error) {
       console.log(
-        `Error in country controller - getCountryList: ${error.message}`
+        `Error in ticket controller : ${error.message}`
       );
       data.response = error.message;
       res.send(data);
     }
   };
+
+  router.getAllRecievedTicketsManagerId = async (req,res) => {
+    let data = { status: 0, response: message.inValid },
+    ticketData = req.body,
+    ticketsData, condition
+
+  try {
+    if (
+      Object.keys(ticketData).length === 0 &&
+      ticketData.data === undefined
+    ) {
+      res.send(data);
+
+      return;
+    }
+    ticketData = ticketData.data[0];
+    if (!mongoose.isValidObjectId(ticketData.id)) {
+      return res.send({ status: 0, response: message.invalidId });
+    }
+  
+    condition = { managedBy: new ObjectId(ticketData.id), status: { $in: [1, 2] } }
+      const aggregationQuery = [
+        {
+          $lookup: {
+            from: "users",
+            localField: "managedBy",
+            foreignField: "_id",
+            as: "managerDetails"
+          }
+        },
+        {
+          $unwind: "$managerDetails"
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "assignedTo",
+            foreignField: "_id",
+            as: "assignedDetails"
+          }
+        },
+        {
+          $unwind: { path: "$assignedDetails", preserveNullAndEmptyArrays: true }
+        },
+        {
+          $match: condition
+        },
+        {
+          $project: {
+            _id: 1,
+            managerName: '$managerDetails.fullName',
+            managerId: '$managerDetails._id',
+            assignedId: '$assignedDetails._id',
+            issueName: 1,
+            type: 1,
+            issueDescription: 1,
+            mailList: 1,
+            status: 1,
+            createdAt: 1,
+            issueGroup: 1,
+            assignedName: '$assignedDetails.fullName',
+            mailList: 1
+          }
+        }
+      ];
+            
+      ticketsData = await db.getAggregation('ticket', aggregationQuery)
+
+    if (ticketsData) {
+      return res.send({ status: 1, data: JSON.stringify(ticketsData) });
+    }
+  } catch (error) {
+    console.log(
+      `Error in ticket controller : ${error.message}`
+    );
+    data.response = error.message;
+    res.send(data);
+  }
+  }
 
   return router;
 };
