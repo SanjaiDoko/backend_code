@@ -5,6 +5,7 @@ const mongoose = require('mongoose')
 const user = require('../schema/user')
 const ticket = require('../schema/ticket')
 const group = require("../schema/group")
+const feedBack = require("../schema/feedBack")
 // const userDetail = require('../schema/main/userDetail')
 // const country = require('../schema/main/country')
 // const costHeading = require('../schema/main/costHeading')
@@ -33,6 +34,7 @@ const db = {
   user,
   ticket,
   group,
+  feedBack,
 //   userDetail,
 //   country,
 //   costHeading,

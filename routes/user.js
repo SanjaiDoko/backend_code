@@ -23,6 +23,8 @@ module.exports = (app) => {
         app.post('/user/changeForgotPassword', userValidation.forgotPassword, user.changeForgotPassword)
 
         app.post('/user/logout', userValidation.checkId, user.logout)
+        
+        app.post('/user/feedBack', userValidation.checkFeedBack, user.sendFeedBack)
 
         app.post('/user/updateStatus',  user.updatedUserStatusById) 
 

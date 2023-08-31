@@ -22,6 +22,7 @@ module.exports = () => {
           email: 1,
           createdAt: 1,
           status: 1,
+          groupId:1
         }
       );
       if (usersData) {
@@ -95,7 +96,6 @@ module.exports = () => {
       }
 
       if (groupDataArray) {
-        console.log(groupDataArray)
         return res.send({ status: 1, data: JSON.stringify(groupDataArray) });
       }
     } catch (error) {
@@ -286,24 +286,26 @@ module.exports = () => {
   router.getUsersByGroupId = async (req, res) => {
     let data = { status: 0, response: message.inValid },
       groupId,
-      resData = null,
       userData;
 
     try {
-      groupId = await db.findAndSelect(
-        "group",
-        { status: { $in: [1] } },
-        { _id: 1 }
-      );
-      if (groupData) {
-        return res.send({ status: 1, data: JSON.stringify(groupData) });
+      groupId = req.body
+      if (Object.keys(groupId).length === 0 && groupId.data === undefined) {
+        res.send(data)
+
+        return
+      }
+      groupId = groupId.data[0]
+      if (!mongoose.isValidObjectId(groupId.id)) {
+
+        return res.send({ status: 0, response: message.invalidUserId })
       }
 
-      userData = await db.findDocuments(
-        "user",
-        { groupId: new ObjectId(idData.id), role: { $in: [1, 3] } },
-        { fullName: 1 }
-      );
+       userData = await db.findDocuments("user", { groupId: new ObjectId(groupId) },{_id:1, fullName:1,role:1,})
+
+      // if (groupData) {
+      //   return res.send({ status: 1, data: JSON.stringify(groupData) });
+      // }
 
       if (userData.length !== 0) {
         return res.send({ status: 1, data: JSON.stringify(userData) });

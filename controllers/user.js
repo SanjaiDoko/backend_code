@@ -14,6 +14,44 @@ module.exports = () => {
     mailResendAttempts = 2;
   let templatePathUser = path.resolve("./templates/user/");
 
+  const feedBackSendMail = async (mailData) => {
+    console.log(mailData)
+    ejs.renderFile(
+      `${templatePathUser}/createTicket.ejs`,
+      {
+        fullName: mailData.fullName,
+        email: mailData.emailTo,
+      },
+      (err, data) => {
+        if (err) {
+          console.log(err);
+        } else {
+          let mailOptions = {
+            from: process.env.SMTP_AUTH_USER,
+            to: mailData.emailTo,
+            subject: `CRM | Ticket assigned`,
+            html: data,
+          };
+
+          //Send Mail
+          transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+              if (mailResendAttempts !== 0) {
+                feedBackSendMail(mailData);
+                mailResendAttempts--;
+              } else {
+                mailResendAttempts = 2;
+              }
+              console.log(`Create Ticket Mail Not Sent - ${error}`);
+              return console.log(error);
+            }
+            console.log(`Create Ticket Mail sent:  - ${info.messageId}`);
+          });
+        }
+      }
+    );
+  };
+
   const forgotPasswordMail = async (mailData) => {
     ejs.renderFile(
       `${templatePathUser}/forgotPassword.ejs`,
@@ -363,6 +401,41 @@ module.exports = () => {
         `Error in user controller - changeForgotPassword: ${error.message}`
       );
       res.send(error.message);
+    }
+  };
+
+  //Insert Feed Back
+  router.sendFeedBack = async (req, res) => {
+    let data = { status: 0, response: "Invalid request" },
+      feedBackData = req.body,
+      insertFeedBack,
+      userData
+
+    try {
+      if (Object.keys(feedBackData).length === 0 && feedBackData.data === undefined) {
+        res.send(data);
+
+        return;
+      }
+      feedBackData = feedBackData.data[0];
+      feedBackData.systemInfo = req.rawHeaders;
+
+      insertFeedBack = await db.insertSingleDocument("feedBack", feedBackData);
+
+      userData = await db.findSingleDocument("user", { _id: new ObjectId(feedBackData.createdById) },{_id:1, fullName:1, email:1})
+
+      await feedBackSendMail({
+        emailTo: userData.email,
+        fullName: userData.fullName,
+        // url: "http://localhost:5173/change-password/" + managerData._id + "/2",
+      });
+      
+      return res.send({
+        status: 1,
+        response: "FeedBack Sent successfully ",
+      });
+    } catch (error) {
+      return res.send(error.message);
     }
   };
 
