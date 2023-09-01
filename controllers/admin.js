@@ -76,7 +76,7 @@ module.exports = () => {
     try {
       groupData = await db.findAndSelect(
         "group",
-        { status: { $in: [1] } },
+        { status: { $in: [1,2] } },
         { _id: 1, name: 1, managedBy: 1, users: 1, status: 1 }
       );
 
