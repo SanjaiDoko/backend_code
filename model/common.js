@@ -436,7 +436,7 @@ const loginParameter = async (model, loginData, res, req) => {
     status: 1
   });
 
-  if(loginData.type === 1 && user.groupId === null){
+  if(loginData.type === 1 && user?.groupId === null){
     return res.send({status:0,response: "You are added any group, Please wait some time"})
   }
   

@@ -213,7 +213,7 @@ module.exports = () => {
     }
     condition = {
       _id: new ObjectId(ticketData.id),
-      status: { $in: [1, 2, 0] },
+      status: { $in: [1, 2, 0, 3] },
     };
     const aggregationQuery = [
       {
@@ -257,7 +257,7 @@ module.exports = () => {
           createdAt: 1,
           issueGroup: 1,
           assignedName: "$assignedDetails.fullName",
-          assignedId: "$assignedDetails._id",
+          assignedTo: "$assignedDetails._id",
           mailList: 1,
           files: 1,
           endTime: 1
@@ -299,7 +299,7 @@ module.exports = () => {
       }
       condition = {
         createdBy: new ObjectId(ticketData.id),
-        status: { $in: [1, 2, 0] },
+        status: { $in: [1, 2, 0, 3] },
       };
       const aggregationQuery = [
         {
@@ -386,7 +386,7 @@ module.exports = () => {
 
       condition = {
         assignedTo: new ObjectId(ticketData.id),
-        status: { $in: [1, 2, 0] },
+        status: { $in: [1, 2, 0, 3] },
       };
 
       const aggregationQuery = [
@@ -473,7 +473,7 @@ module.exports = () => {
 
       condition = {
         managedBy: new ObjectId(ticketData.id),
-        status: { $in: [1, 2, 0] },
+        status: { $in: [1, 2, 0, 3] },
       };
       const aggregationQuery = [
         {
