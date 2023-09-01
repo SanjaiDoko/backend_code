@@ -190,21 +190,23 @@ module.exports = function (app, io) {
         }
     ]
 
-    // validator.userGateway = [
-    //     check('data').notEmpty().withMessage('Data cannot be empty'),
-    //     check('data.*.userId').notEmpty().withMessage('userId is required field'),
-    //     check('data.*.preferredGateway').trim().notEmpty().withMessage('preferredGateway cannot be empty'),
-    //     (req, res, next) => {
-    //         const errors = validationResult(req).array();
-    //         if (errors.length > 0) {
-    //             data.response = errors[0].msg;
+    validator.checkFeedBack = [
+        check('data').notEmpty().withMessage('Data cannot be empty'),
+        check('data.*.rating').notEmpty().withMessage('Rating is required field'),
+        check('data.*.suggestion').trim().notEmpty().withMessage('Suggestion cannot be empty'),
+        check('data.*.groupId').notEmpty().withMessage('Group Id cannot be empty'),
+        check('data.*.createdById').notEmpty().withMessage('CreatedById cannot be empty'),
+        (req, res, next) => {
+            const errors = validationResult(req).array();
+            if (errors.length > 0) {
+                data.response = errors[0].msg;
 
-    //             return res.send(data);
-    //         }
+                return res.send(data);
+            }
 
-    //         return next();
-    //     }
-    // ]
+            return next();
+        }
+    ]
 
     // validator.checkChangePassword = [
     //     check('data').notEmpty().withMessage('Data cannot be empty'),
