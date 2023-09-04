@@ -53,6 +53,9 @@ let userSchema = mongoose.Schema({
     timeLog: {
         type: String
     },
+    files:{
+        type:Array
+    },
     status: {               // 1 - active, 2 - deactive, 0 - delete
         type: Number,
         default: 0

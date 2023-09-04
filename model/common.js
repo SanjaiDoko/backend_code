@@ -316,16 +316,16 @@ const downloadFileAzure = async (folderName, fileToDownload, type) => {
 };
 
 //Create Milestone Directory - createDir(fileuploadpath)
-const createDir = async (path) => {
-  await fs.mkdir(path, { recursive: true }, (err) => {
-    if (err) throw err;
-  });
-};
+// const createDir = async (path) => {
+//   await fs.mkdir(path, { recursive: true }, (err) => {
+//     if (err) throw err;
+//   });
+// };
 
 //Create Milestone File - createMilestoneFile(`${filePath}/${lclbookingId}/${fileName}`, base64Pdf, 'base64')
-const createFile = async (filePath, fileData, fileEncoding) => {
-  await fs.writeFile(filePath, fileData, { encoding: fileEncoding });
-};
+// const createFile = async (filePath, fileData, fileEncoding) => {
+//   await fs.writeFile(filePath, fileData, { encoding: fileEncoding });
+// };
 
 const hasDuplicates = (array) => {
   var valuesSoFar = [];
@@ -433,20 +433,23 @@ const loginParameter = async (model, loginData, res, req) => {
   privateKey = await fs.readFile("privateKey.key", "utf8");
   user = await db.findSingleDocument(model, {
     email: loginData.email,
-    status: 1,
-    groupId:1,
-    fullName:1
+    status: 1
   });
+
+  if(loginData.type === 1 && user?.groupId === null){
+    return res.send({status:0,response: "You are added any group, Please wait some time"})
+  }
+  
   if (user !== null && Object.keys(user).length !== 0) {
     if (user.password !== undefined) {
       // && (user.logoutTime === undefined || user.logoutTime !== null)
       passwordMatch = bcrypt.compareSync(loginData.password, user.password);
       if (passwordMatch === true) {
-        // checkSession = await db.findOneDocumentExists("sessionManagement", { userId: new ObjectId(user._id) })
-        // if (checkSession === true) {
+        checkSession = await db.findOneDocumentExists("sessionManagement", { userId: new ObjectId(user._id) })
+        if (checkSession === true) {
 
-        //   return res.send({ status: 0, response: message.alreadyLogin, data: user._id })
-        // }
+          return res.send({ status: 0, response: message.alreadyLogin, data: user._id })
+        }
         generatedToken = jwt.sign(
           {
             userId: user._id,
@@ -459,10 +462,7 @@ const loginParameter = async (model, loginData, res, req) => {
           privateKey,
           { algorithm: "RS256" }
         );
-        res.setHeader("Authorization", "Bearer " + generatedToken);
-        // if(user.groupId === null){
-        //   res.send({ status: 0, response: "You are Not Added In Any Group" })
-        // }
+        res.setHeader("Authorization", "Bearer " + generatedToken)
         loginTime = Date.now();
         updateLogIn = await db.updateOneDocument(
           model,
@@ -471,7 +471,7 @@ const loginParameter = async (model, loginData, res, req) => {
         );
         if (updateLogIn.modifiedCount !== 0 && updateLogIn.matchedCount !== 0) {
           // loginAttempts.set(loginData.email, 0)
-          // await db.insertSingleDocument("sessionManagement", { userId: user._id, jwt: generatedToken })
+          await db.insertSingleDocument("sessionManagement", { userId: user._id, jwt: generatedToken })
           return res.send({
             status: 1,
             response: message.login,
@@ -480,6 +480,8 @@ const loginParameter = async (model, loginData, res, req) => {
               // groupId: user.groupId,
               // fullName:user.fullName,
               token: generatedToken,
+              groupId: user.groupId,
+              fullName: user.fullName
             }),
           });
         }
@@ -573,9 +575,9 @@ const logoutParameter = async (model, logoutData, res, req) => {
     { logoutTime: logoutTime }
   );
   if (updateLogOut.modifiedCount !== 0 && updateLogOut.matchedCount !== 0) {
-    // await db.deleteOneDocument("sessionManagement", {
-    //   userId: new ObjectId(logoutData.id),
-    // });
+    await db.deleteOneDocument("sessionManagement", {
+      userId: new ObjectId(logoutData.id),
+    });
     return res.send({
       status: 1,
       response: message.logoutSucess,
@@ -618,6 +620,15 @@ const checkAccess = function (role) {
     }
   };
 };
+
+
+const createDir = async(folderPath) => {
+      await fs.mkdir(folderPath);
+}
+
+const createFile =async (buffer, path, encodeType) => {
+     await fs.writeFile(buffer, path, encodeType)
+}
 
 module.exports = {
   uploadFileAzure,

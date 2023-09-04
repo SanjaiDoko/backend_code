@@ -26,7 +26,7 @@ const internal = require('../schema/internal')
 // const milestone =require('../schema/main/milestone')
 // const paymentDetail =require('../schema/main/paymentDetail')
 // const hsn = require("../schema/main/hsn")
-// const sessionManagement = require("../schema/main/sessionManagement")
+const sessionManagement = require("../schema/sessionManagement")
 const { ObjectId } = require('bson')
 
 //DB Collection Schema
@@ -55,7 +55,7 @@ const db = {
 //   milestone,
 //   paymentDetail,
 //   hsn,
-//   sessionManagement
+  sessionManagement
 }
 
 /**All mongoose queryfunction and normal functions */
@@ -225,8 +225,8 @@ const findOneAndUpdate = async (collection, filter, update) => {
 
     return updatedDoc;
   }
-  catch {
-    console.error("Error finding one and updating document: ", error)
+  catch (error) {
+    console.error("Error finding one and updating document: ", error.message)
 
     throw error;
   }

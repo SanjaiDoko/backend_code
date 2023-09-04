@@ -1,0 +1,25 @@
+{
+    "port": "3000",
+    "mongodb": {
+      "host": "192.168.0.91",
+      "port": "27017",
+      "database": "crm",
+      "username": "",
+      "password": ""
+    },
+    "settings": {
+      "apiUrl": "192.168.0.91:3000/",
+      "uiUrl": "http://localhost:5173",
+      "nodeFileUploads": "fileuploads/",
+      "siteTitle": "allmasters",
+      "siteUrl": "http://localhost:5173/",
+      "otpUrl": "http://localhost:5173/otp/",
+      "changePasswordUrl": "http://localhost:5173/change-password/",
+      "createPasswordUrl": "http://localhost:5173/create-password/",
+      "cfsPasswordUrl": "http://localhost:5173/cfspassword/"
+    },
+    "azureFilePath": {
+      "shareName": "files",
+      "directory": "All Masters/Local"
+    }
+  }
