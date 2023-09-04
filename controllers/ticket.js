@@ -260,7 +260,8 @@ module.exports = () => {
           assignedTo: "$assignedDetails._id",
           mailList: 1,
           files: 1,
-          endTime: 1
+          endTime: 1,
+          actualEndTime: 1
         },
       },
     ];
