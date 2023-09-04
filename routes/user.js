@@ -5,6 +5,8 @@
 // const { decryptData } = require('../model/decrypt')
 // const { checkAccess } = require("../model/common")
 
+const { ensureAuthorized } = require("../model/auth");
+
 module.exports = (app) => {
     try {
 
@@ -26,7 +28,7 @@ module.exports = (app) => {
         
         app.post('/user/feedBack', userValidation.checkFeedBack, user.sendFeedBack)
 
-        app.post('/user/updateStatus',  user.updatedUserStatusById) 
+        app.post('/user/updateStatus', ensureAuthorized,  user.updatedUserStatusById) 
 
         app.get("/crm",(req,res) => {
 
