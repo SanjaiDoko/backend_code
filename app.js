@@ -8,9 +8,12 @@ const app = express()
 const server = require('http').createServer(app)
 const morgan = require('morgan')
 const cors = require("cors")
+const CONFIG = require("./config/config")
+const CONFIGJSON = require('./config/config.json')
+
 
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: CONFIGJSON.settings.uiUrl,
     methods: ["GET", "POST"],
     allowedHeaders: ["Origin", "X-Requested-with", "Content-Type", "Accept", "Authorization"],
 }))
@@ -20,7 +23,7 @@ let options = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 }
-mongoose.connect(process.env.DB_URL, options);
+mongoose.connect(CONFIG.DB_URL, options);
 mongoose.connection.on("error", (error) => console.error("Error in MongoDb connection: " + error));
 mongoose.connection.on("reconnected", () => console.log("Trying to reconnect!"));
 mongoose.connection.on("disconnected", () => console.log("MongoDB disconnected!"));
@@ -29,23 +32,7 @@ mongoose.connection.on("connected", () => {
     app.set("etag", false)
     app.use(bodyParser.urlencoded({ limit: "100mb", extended: true })) // Parse application/x-www-form-urlencoded
     app.use(bodyParser.json({ limit: "100mb", strict: true })) // bodyParser - Initializing/Configuration
-    // app.use(function(req, res, next) {
-    //     res.setHeader('Access-Control-Allow-Origin', '*')
-    //     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
-    //     res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-    //     res.setHeader('Access-Control-Allow-Credentials', false)
-    //     next();
-    // });
-    app.set('trust proxy', 1) // trust first proxy
-    // app.use((err, req, res, next) => {
-    //     if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
 
-    //         res.send({ response: "invalid JSON input" }) // Handling JSON parsing error
-    //     } else {
-
-    //         next(err); // Forwarding other errors to the next middleware
-    //     }
-    // });
     // app.use(compression()) // use compression middleware to compress and serve the static content
     app.use("/fileuploads", express.static(path.join(__dirname, "/fileuploads"), { etag: false }))
 
@@ -85,7 +72,7 @@ mongoose.connection.on("connected", () => {
     /** HTTP Server Instance */
     try {
         server.listen(process.env.PORT, () => {
-            console.log("Server turned on with", process.env.ENV, "mode on port", process.env.PORT);
+            console.log("Server turned on with", CONFIG.ENV, "mode on port", CONFIG.PORT);
         });
     } catch (ex) {
         console.log("TCL: ex", ex)
