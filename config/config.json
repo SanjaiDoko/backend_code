@@ -1,17 +1,14 @@
 {
     "port": "3000",
     "mongodb": {
-      "host": "192.168.0.200",
-      "port": "37017",
-      "database": "allmasters",
-      "username": "AMSLocal_admin",
-      "password": "Ams2023$"
-    },
-    "booking": {
-      "bIdFormat": "AM"
+      "host": "192.168.0.91",
+      "port": "27017",
+      "database": "crm",
+      "username": "",
+      "password": ""
     },
     "settings": {
-      "apiUrl": "192.168.0.200:4008/",
+      "apiUrl": "192.168.0.91:3000/",
       "uiUrl": "http://localhost:5173",
       "nodeFileUploads": "fileuploads/",
       "siteTitle": "allmasters",
@@ -19,12 +16,7 @@
       "otpUrl": "http://localhost:5173/otp/",
       "changePasswordUrl": "http://localhost:5173/change-password/",
       "createPasswordUrl": "http://localhost:5173/create-password/",
-      "cfsPasswordUrl": "http://localhost:5173/cfspassword/",
-      "milestoneUrl": "http://localhost:5173/user/mybookings/",
-      "dcfsMilestoneUrl": "http://localhost:5173/dcfs/bookings/",
-      "termsConditionurl":"http://localhost:5173/termsconditons",
-      "linkdinUrl": "https://www.linkedin.com/company/allmasters-ai/",
-      "instaUrl": "https://www.instagram.com/allmasters.ai/"
+      "cfsPasswordUrl": "http://localhost:5173/cfspassword/"
     },
     "azureFilePath": {
       "shareName": "files",

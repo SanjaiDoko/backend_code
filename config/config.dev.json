@@ -1,0 +1,30 @@
+{
+    "port": "3000",
+    "mongodb": {
+      "host": "192.168.0.91",
+      "port": "27017",
+      "database": "crm",
+      "username": "",
+      "password": ""
+    },
+    "settings": {
+      "apiUrl": "192.168.0.91:3000",
+      "uiUrl": "http://dev.ams.ai",
+      "nodeFileUploads": "fileuploads/",
+      "siteTitle": "allmasters",
+      "siteUrl": "http://dev.ams.ai/",
+      "otpUrl": "http://dev.ams.ai/otp/",
+      "changePasswordUrl": "http://dev.ams.ai/change-password/",
+      "createPasswordUrl": "http://dev.ams.ai/create-password/",
+      "cfsPasswordUrl": "http://dev.ams.ai/cfspassword/",
+      "milestoneUrl": "http://dev.ams.ai/user/mybookings/",
+      "dcfsMilestoneUrl": "http://dev.ams.ai/dcfs/bookings/",
+      "termsConditionurl":"http://dev.ams.ai/termsconditons",
+      "linkdinUrl": "https://www.linkedin.com/company/allmasters-ai/",
+      "instaUrl": "https://www.instagram.com/allmasters.ai/"
+    },
+    "azureFilePath": {
+      "shareName": "files",
+      "directory": "All Masters/Dev"
+    }
+  }

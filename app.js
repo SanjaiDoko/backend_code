@@ -7,6 +7,13 @@ const fs = require('fs')
 const app = express()
 const server = require('http').createServer(app)
 const morgan = require('morgan')
+const cors = require("cors")
+
+app.use(cors({
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Origin", "X-Requested-with", "Content-Type", "Accept", "Authorization"],
+}))
 
 let options = {
     connectTimeoutMS: 30000,
@@ -22,13 +29,13 @@ mongoose.connection.on("connected", () => {
     app.set("etag", false)
     app.use(bodyParser.urlencoded({ limit: "100mb", extended: true })) // Parse application/x-www-form-urlencoded
     app.use(bodyParser.json({ limit: "100mb", strict: true })) // bodyParser - Initializing/Configuration
-    app.use(function(req, res, next) {
-        res.setHeader('Access-Control-Allow-Origin', '*')
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
-        res.setHeader('Access-Control-Allow-Credentials', true)
-        next();
-    });
+    // app.use(function(req, res, next) {
+    //     res.setHeader('Access-Control-Allow-Origin', '*')
+    //     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE')
+    //     res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+    //     res.setHeader('Access-Control-Allow-Credentials', false)
+    //     next();
+    // });
     app.set('trust proxy', 1) // trust first proxy
     // app.use((err, req, res, next) => {
     //     if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {

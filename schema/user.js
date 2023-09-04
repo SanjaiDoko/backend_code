@@ -34,6 +34,7 @@ let userSchema = mongoose.Schema({
     },
     groupId: {
         type: ObjectId,
+        ref:"group",
         default:null,
     },
     createdBy: {
