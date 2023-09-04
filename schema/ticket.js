@@ -45,10 +45,12 @@ let userSchema = mongoose.Schema({
        type: Date
     },
     endTime: {
-        type: Date
+        type: Date,
+        default: null
     },
     actualEndTime: {
-        type: Date
+        type: Date,
+        default: null
     },
     timeLog: {
         type: String

@@ -8,12 +8,10 @@ const app = express()
 const server = require('http').createServer(app)
 const morgan = require('morgan')
 const cors = require("cors")
-const CONFIG = require("./config/config")
-const CONFIGJSON = require('./config/config.json')
 
 
 app.use(cors({
-    origin: CONFIGJSON.settings.uiUrl,
+    origin: process.env.UIURL,
     methods: ["GET", "POST"],
     allowedHeaders: ["Origin", "X-Requested-with", "Content-Type", "Accept", "Authorization"],
 }))
@@ -23,7 +21,7 @@ let options = {
     useNewUrlParser: true,
     useUnifiedTopology: true,
 }
-mongoose.connect(CONFIG.DB_URL, options);
+mongoose.connect(process.env.DB_URL, options);
 mongoose.connection.on("error", (error) => console.error("Error in MongoDb connection: " + error));
 mongoose.connection.on("reconnected", () => console.log("Trying to reconnect!"));
 mongoose.connection.on("disconnected", () => console.log("MongoDB disconnected!"));
@@ -72,7 +70,7 @@ mongoose.connection.on("connected", () => {
     /** HTTP Server Instance */
     try {
         server.listen(process.env.PORT, () => {
-            console.log("Server turned on with", CONFIG.ENV, "mode on port", CONFIG.PORT);
+            console.log("Server turned on with", process.env.ENV, "mode on port", process.env.PORT);
         });
     } catch (ex) {
         console.log("TCL: ex", ex)
