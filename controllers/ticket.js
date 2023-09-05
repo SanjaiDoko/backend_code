@@ -172,6 +172,7 @@ module.exports = () => {
         await ticketSendMail({
           emailTo: assignedNameData.email,
           fullName: assignedNameData.fullName,
+          mail: ticketData.mailList,
           url:
           process.env.UIURL + "/user/dashboard/" + ticketData._id
         });
