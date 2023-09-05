@@ -149,27 +149,6 @@ module.exports = function (app, io) {
     //         }
     //     ]
 
-    // validator.updateUserStatus =
-    //     [
-    //         check('data').notEmpty().withMessage('Data cannot be empty'),
-    //         check('data.*.id').notEmpty().withMessage('id cannot be empty'),
-    //         check('data.*.status').notEmpty().withMessage('Status cannot be empty'),
-    //         check('data.*.reason').notEmpty().withMessage('Reason cannot be empty'),
-    //         check('data.*.reason.message').notEmpty().withMessage('Message - Message cannot be empty'),
-    //         check('data.*.reason.role').notEmpty().withMessage('Message - Role cannot be empty'),
-    //         check('data.*.reason.time').notEmpty().withMessage('Message - Time cannot be empty'),
-    //         check('data.*.reason.status').notEmpty().withMessage('Message - Status cannot be empty'),
-    //         check('data.*.reason.id').notEmpty().withMessage('reason - Id cannot be empty'),
-    //         (req, res, next) => {
-    //             const errors = validationResult(req).array()
-    //             if (errors.length > 0) {
-
-    //                 return res.send({ status: 0, response: errors[0].msg })
-    //             }
-
-    //             return next()
-    //         }
-    //     ]
 
     validator.forgotPassword = [
         check('data').notEmpty().withMessage('Data cannot be empty'),

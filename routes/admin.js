@@ -12,6 +12,8 @@ module.exports = (app) => {
     const admin = require("../controllers/admin")();
     const groupValidation = require("../validation/admin/groupValidation")()
 
+    app.post("/admin/register", admin.adminRegistration, admin.adminRegistration)
+
     app.get("/user/getAllUsers", ensureAuthorized, admin.getAllUsers);
     app.get("/user/getUsersById", ensureAuthorized, admin.getUserById);
     app.post("/user/getUserByGroupId", ensureAuthorized, admin.getUsersByGroupId);

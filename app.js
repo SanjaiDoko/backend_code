@@ -9,6 +9,7 @@ const server = require('http').createServer(app)
 const morgan = require('morgan')
 const cors = require("cors")
 
+app.options('*', cors());
 
 app.use(cors({
     origin: process.env.UIURL,

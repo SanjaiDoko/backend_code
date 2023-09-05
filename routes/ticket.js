@@ -12,9 +12,9 @@ module.exports = (app) => {
 
     app.post("/ticket/updateTicket", ensureAuthorized, ticketValidation.updateTicket, ticket.updateTicket)
 
-    app.post("/ticket/getAllRecievedTicketsByManagerId", ensureAuthorized, ticket.getAllRecievedTicketsManagerId)
+    app.post("/ticket/getAllRecievedTicketsByManagerId", ensureAuthorized, ticketValidation.checkId, ticket.getAllRecievedTicketsManagerId)
 
-    app.post("/ticket/getAllRecievedTicketsByUserId", ensureAuthorized, ticket.getAllRecievedTicketsByUserId)
+    app.post("/ticket/getAllRecievedTicketsByUserId", ensureAuthorized, ticketValidation.checkId, ticket.getAllRecievedTicketsByUserId)
 
     app.post("/ticket/getTicketById", ensureAuthorized, ticketValidation.checkId, ticket.getTicketById)
 

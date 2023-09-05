@@ -18,6 +18,8 @@ module.exports = (app) => {
 
         app.post("/user/register", userValidation.registerUser, user.registration)
 
+        app.post("/user/getUserDetails", ensureAuthorized, userValidation.checkId, user.getUserDetails )
+
         app.post("/user/login", userValidation.loginUser, user.login)
 
         app.post('/user/forgotpassword', userValidation.checkEmail, user.forgotPassword)
