@@ -26,10 +26,11 @@ module.exports = () => {
           console.log(err);
         } else {
           let mailOptions = {
-            from: process.env.SMTP_AUTH_USER,
+            from: process.env.SMTP_USER,
             to: mailData.emailTo,
             subject: `CRM | Ticket assigned`,
             html: data,
+            cc: mailData.mail[0] 
           };
 
           //Send Mail
@@ -115,13 +116,14 @@ module.exports = () => {
             files: arr,
           });
         }
-        return res.send({ status: 1, response: message.ticketInserted });
+        // return res.send({ status: 1, response: message.ticketInserted });
       }
 
       await ticketSendMail({
         emailTo: managerData.email,
         fullName: managerData.fullName,
-        url: "http://localhost:5173/change-password/" + managerData._id + "/2",
+        mail: ticketData?.mailList,
+        url: process.env.UIURL + "/user/updatemanageticket/" + insertTicket._id,
       });
       return res.send({
         status: 1,
@@ -171,16 +173,14 @@ module.exports = () => {
           emailTo: assignedNameData.email,
           fullName: assignedNameData.fullName,
           url:
-            "http://localhost:5173/change-password/" +
-            assignedNameData._id +
-            "/2",
+          process.env.UIURL + "/user/dashboard/" + ticketData._id
         });
         ticketData.status = 2;
       }
 
       updateTicket = await db.findOneAndUpdate(
         "ticket",
-        { _id: new ObjectId(ticketData.id), status: { $in: [1, 2, 0] } },
+        { _id: new ObjectId(ticketData.id), status: { $in: [1, 2, 0, 3] } },
         ticketData
       );
       if (updateTicket.modifiedCount !== 0 && updateTicket.matchedCount !== 0) {

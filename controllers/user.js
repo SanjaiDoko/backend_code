@@ -15,7 +15,7 @@ module.exports = () => {
   let templatePathUser = path.resolve("./templates/user/");
 
   const feedBackSendMail = async (mailData) => {
-    console.log(mailData)
+    console.log(mailData);
     ejs.renderFile(
       `${templatePathUser}/createTicket.ejs`,
       {
@@ -128,33 +128,38 @@ module.exports = () => {
 
   //Get User Details
   router.getUserDetails = async (req, res) => {
-    let data = { status: 0, response: message.inValid }
+    let data = { status: 0, response: message.inValid };
 
     try {
-      let userData = req.body, userDetails
+      let userData = req.body,
+        userDetails;
 
       if (Object.keys(userData).length === 0 && userData.data === undefined) {
-
-        return res.send(data)
+        return res.send(data);
       }
-      userData = userData.data[0]
+      userData = userData.data[0];
       if (!mongoose.isValidObjectId(userData.id)) {
-
-        return res.send({ status: 0, response: message.invalidUserId })
+        return res.send({ status: 0, response: message.invalidUserId });
       }
 
-      userDetails = await db.findSingleDocument("user",{_id: userData.id}, {fullName: 1, _id: 1, mobileNumber: 1, email: 1, role: 1})
+      userDetails = await db.findSingleDocument(
+        "user",
+        { _id: userData.id },
+        { fullName: 1, _id: 1, mobileNumber: 1, email: 1, role: 1 }
+      );
 
       if (userDetails) {
-        return res.send({status:1, data: JSON.stringify(userDetails) })
+        return res.send({ status: 1, data: JSON.stringify(userDetails) });
       }
 
-      return res.send(data)
+      return res.send(data);
     } catch (error) {
-      console.log(`Error in user controller - updateuserstatusById: ${error.message}`)
-      res.send(error.message)
+      console.log(
+        `Error in user controller - updateuserstatusById: ${error.message}`
+      );
+      res.send(error.message);
     }
-  }
+  };
 
   //Login
   router.login = async (req, res) => {
@@ -173,7 +178,7 @@ module.exports = () => {
 
       if (loginData.type === 1) {
         //Type 1 - User Schema
-        
+
         common.loginParameter("user", loginData, res, req);
       } else if (loginData.type === 2) {
         //Type 2 - Internal Schema
@@ -188,70 +193,77 @@ module.exports = () => {
     }
   };
 
-   //Logout
-   router.logout = async (req, res) => {
-    let data = { status: 0, response: message.inValid }
+  //Logout
+  router.logout = async (req, res) => {
+    let data = { status: 0, response: message.inValid };
 
     try {
-      let logoutData = req.body
+      let logoutData = req.body;
 
-      if (Object.keys(logoutData).length === 0 && logoutData.data === undefined) {
-        res.send(data)
+      if (
+        Object.keys(logoutData).length === 0 &&
+        logoutData.data === undefined
+      ) {
+        res.send(data);
 
-        return
+        return;
       }
-      logoutData = logoutData.data[0]
+      logoutData = logoutData.data[0];
 
       if (!mongoose.isValidObjectId(logoutData.id)) {
-
-        return res.send({ status: 0, response: message.invalidUserId })
+        return res.send({ status: 0, response: message.invalidUserId });
       }
 
-      if (logoutData.type === 1) {                            //Type 1 - User Schema 
-        common.logoutParameter('user', logoutData, res, req)
-      }
-      else if (logoutData.type === 2) {                      //Type 2 - Partner Schema 
-        common.logoutParameter('internal', logoutData, res, req)
-      }
-      else {
-
-        return res.send(data)
+      if (logoutData.type === 1) {
+        //Type 1 - User Schema
+        common.logoutParameter("user", logoutData, res, req);
+      } else if (logoutData.type === 2) {
+        //Type 2 - Partner Schema
+        common.logoutParameter("internal", logoutData, res, req);
+      } else {
+        return res.send(data);
       }
     } catch (error) {
-      logger.error(`Error in user controller - logout: ${error.message}`)
-      res.send(error.message)
+      logger.error(`Error in user controller - logout: ${error.message}`);
+      res.send(error.message);
     }
-  }
+  };
 
   //update Status
-  router.updatedUserStatusById = async (req,res) => {
-    let data = { status: 0, response: message.inValid }
+  router.updatedUserStatusById = async (req, res) => {
+    let data = { status: 0, response: message.inValid };
 
     try {
-      let statusData = req.body, updateStatus
+      let statusData = req.body,
+        updateStatus;
 
-      if (Object.keys(statusData).length === 0 && statusData.data === undefined) {
-
-        return res.send(data)
+      if (
+        Object.keys(statusData).length === 0 &&
+        statusData.data === undefined
+      ) {
+        return res.send(data);
       }
-      statusData = statusData.data[0]
+      statusData = statusData.data[0];
       if (!mongoose.isValidObjectId(statusData.id)) {
-
-        return res.send({ status: 0, response: message.invalidUserId })
+        return res.send({ status: 0, response: message.invalidUserId });
       }
 
-      updateStatus = await db.findByIdAndUpdate("user",statusData.id,{status: statusData.status})
+      updateStatus = await db.findByIdAndUpdate("user", statusData.id, {
+        status: statusData.status,
+      });
 
       if (updateStatus.modifiedCount !== 0 && updateStatus.matchedCount !== 0) {
-        return res.send({status:1, response: "Updated Successfully"})
+        return res.send({ status: 1, response: "Updated Successfully" });
       }
 
-      return res.send(data)
+      return res.send(data);
     } catch (error) {
-      logger.error(`Error in user controller - updateuserstatusById: ${error.message}`)
-      res.send(error.message)
+      logger.error(
+        `Error in user controller - updateuserstatusById: ${error.message}`
+      );
+      res.send(error.message);
     }
-  }
+  };
 
   //Forgot Password
   router.forgotPassword = async (req, res) => {
@@ -378,39 +390,34 @@ module.exports = () => {
           updatePassword.modifiedCount !== 0 &&
           updatePassword.matchedCount !== 0
         ) {
-          //   await db.deleteOneDocument("sessionManagement", {
-          //     userId: new ObjectId(passwordData.id),
-          //   });
-
-          //   event.eventEmitterInsert.emit("insert", "userClone", {
-          //     originalId: passwordData.id,
-          //     actionType: "update",
-          //     fullName: checkOtp._doc.fullName,
-          //     actionMessage: "Changed Password",
-          //     data: passwordData,
-          //   });
+          await db.deleteOneDocument("sessionManagement", {
+            userId: new ObjectId(passwordData.id),
+          });
 
           return res.send({ status: 1, response: message.updatedSucess });
         }
 
         return res.send(data);
-      }
-        else if (passwordData.type && passwordData.type === 2) {
-          checkOtp = await db.findOneDocumentExists("internal", {
-            _id: new ObjectId(passwordData.id),
-            pwOtp: passwordData.otp,
-          });
-          if (checkOtp === false) {
-            return res.send({ status: 0, response: message.forgotOtpmismatched });
-          }
-          updatePassword = await db.findByIdAndUpdate("internal", passwordData.id, {
+      } else if (passwordData.type && passwordData.type === 2) {
+        checkOtp = await db.findOneDocumentExists("internal", {
+          _id: new ObjectId(passwordData.id),
+          pwOtp: passwordData.otp,
+        });
+        if (checkOtp === false) {
+          return res.send({ status: 0, response: message.forgotOtpmismatched });
+        }
+        updatePassword = await db.findByIdAndUpdate(
+          "internal",
+          passwordData.id,
+          {
             password: passwordData.password,
             pwOtp: " ",
-          });
-          if (
-            updatePassword.modifiedCount !== 0 &&
-            updatePassword.matchedCount !== 0
-          ) {
+          }
+        );
+        if (
+          updatePassword.modifiedCount !== 0 &&
+          updatePassword.matchedCount !== 0
+        ) {
           //   await db.deleteOneDocument("sessionManagement", {
           //     userId: new ObjectId(passwordData.id),
           //   });
@@ -420,11 +427,11 @@ module.exports = () => {
           //     data: passwordData,
           //   });
 
-            return res.send({ status: 1, response: message.updatedSucess });
-          }
-
-          return res.send(data);
+          return res.send({ status: 1, response: message.updatedSucess });
         }
+
+        return res.send(data);
+      }
 
       return res.send(data);
     } catch (error) {
@@ -440,10 +447,13 @@ module.exports = () => {
     let data = { status: 0, response: "Invalid request" },
       feedBackData = req.body,
       insertFeedBack,
-      userData
+      userData;
 
     try {
-      if (Object.keys(feedBackData).length === 0 && feedBackData.data === undefined) {
+      if (
+        Object.keys(feedBackData).length === 0 &&
+        feedBackData.data === undefined
+      ) {
         res.send(data);
 
         return;
@@ -453,14 +463,18 @@ module.exports = () => {
 
       insertFeedBack = await db.insertSingleDocument("feedBack", feedBackData);
 
-      userData = await db.findSingleDocument("user", { _id: new ObjectId(feedBackData.createdById) },{_id:1, fullName:1, email:1})
+      userData = await db.findSingleDocument(
+        "user",
+        { _id: new ObjectId(feedBackData.createdById) },
+        { _id: 1, fullName: 1, email: 1 }
+      );
 
       await feedBackSendMail({
         emailTo: userData.email,
         fullName: userData.fullName,
         // url: "http://localhost:5173/change-password/" + managerData._id + "/2",
       });
-      
+
       return res.send({
         status: 1,
         response: "FeedBack Sent successfully ",
