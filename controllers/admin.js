@@ -1,11 +1,44 @@
-const { default: mongoose } = require("mongoose");
-const common = require("../model/common");
-const { message } = require("../model/message");
-const db = require("../model/mongodb");
-const { ObjectId } = require("bson");
+const { default: mongoose } = require("mongoose")
+const common = require("../model/common")
+const { message } = require("../model/message")
+const db = require("../model/mongodb")
+const { ObjectId } = require("bson")
+const bcrypt = require("bcrypt")
 
 module.exports = () => {
   let router = {};
+
+  router.adminRegistration = async(req,res) => {
+    let data = { status: 0, response: "Invalid request" },
+    adminData = req.body,
+    checkEmail,
+    insertUser;
+
+  try {
+    if (Object.keys(adminData).length === 0 && adminData.data === undefined) {
+      res.send(data);
+
+      return;
+    }
+    adminData = adminData.data[0];
+    adminData.systemInfo = req.rawHeaders;
+    adminData.password = bcrypt.hashSync(adminData.password, 10);
+    checkEmail = await db.findOneDocumentExists("internal", {
+      email: adminData.email,
+    });
+    if (checkEmail === true) {
+      return res.send({ status: 0, response: "Email already exists" });
+    }
+    insertUser = await db.insertSingleDocument("internal", adminData);
+    return res.send({
+      status: 1,
+      data: insertUser._id,
+      response: "Registration successfully completed",
+    });
+  } catch (error) {
+    return res.send(error.message);
+  }
+  }
 
   router.getAllUsers = async (req, res) => {
     let data = { status: 0, response: message.inValid },

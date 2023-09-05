@@ -126,6 +126,36 @@ module.exports = () => {
     }
   };
 
+  //Get User Details
+  router.getUserDetails = async (req, res) => {
+    let data = { status: 0, response: message.inValid }
+
+    try {
+      let userData = req.body, userDetails
+
+      if (Object.keys(userData).length === 0 && userData.data === undefined) {
+
+        return res.send(data)
+      }
+      userData = userData.data[0]
+      if (!mongoose.isValidObjectId(userData.id)) {
+
+        return res.send({ status: 0, response: message.invalidUserId })
+      }
+
+      userDetails = await db.findSingleDocument("user",{_id: userData.id}, {fullName: 1, _id: 1, mobileNumber: 1, email: 1, role: 1})
+
+      if (userDetails) {
+        return res.send({status:1, data: JSON.stringify(userDetails) })
+      }
+
+      return res.send(data)
+    } catch (error) {
+      console.log(`Error in user controller - updateuserstatusById: ${error.message}`)
+      res.send(error.message)
+    }
+  }
+
   //Login
   router.login = async (req, res) => {
     let data = { status: 0, response: "Invalid Request" };
@@ -198,7 +228,7 @@ module.exports = () => {
     let data = { status: 0, response: message.inValid }
 
     try {
-      let statusData = req.body, updateStatus, updateReason, userData, aggregationQuery
+      let statusData = req.body, updateStatus
 
       if (Object.keys(statusData).length === 0 && statusData.data === undefined) {
 

@@ -153,7 +153,11 @@ module.exports = () => {
       }
 
       if (ticketData.endTime) {
-        ticketData.endTime = moment(ticketData.endTime, "DD-MM-YYYYTHH:mm:ss");
+        ticketData.endTime = moment(ticketData.endTime, "DD-MM-YYYYTHH:mm:ss")
+      }
+
+      if (ticketData.actualEndTime) {
+        ticketData.endTime = moment(ticketData.actualEndTime)
       }
 
       if (ticketData.assignedTo) {
@@ -261,7 +265,8 @@ module.exports = () => {
           mailList: 1,
           files: 1,
           endTime: 1,
-          actualEndTime: 1
+          actualEndTime: 1,
+          timeLog: 1
         },
       },
     ];
@@ -346,7 +351,8 @@ module.exports = () => {
             assignedName: "$assignedDetails.fullName",
             assignedId: "$assignedDetails._id",
             mailList: 1,
-            files: 1
+            files: 1,
+            timeLog: 1
           },
         },
       ];
@@ -435,7 +441,8 @@ module.exports = () => {
             assignedName: "$assignedDetails.fullName",
             mailList: 1,
             files: 1,
-            endTime: 1
+            endTime: 1,
+            timeLog: 1
           },
         },
       ];
@@ -520,7 +527,8 @@ module.exports = () => {
             issueGroup: 1,
             assignedName: "$assignedDetails.fullName",
             mailList: 1,
-            endTime: 1
+            endTime: 1,
+            timeLog: 1
           },
         },
       ];
