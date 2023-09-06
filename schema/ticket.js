@@ -67,7 +67,13 @@ let userSchema = mongoose.Schema({
         type: Number,
         default: 0
     },
-    status: {               // 1 - active, 2 - deactive, 0 - delete
+    problem: {
+       type: String
+    },
+    resolution: {
+       type: String
+    },
+    status: {               // 0 - not assigned, 1 - completed, 2 - progress, 3 - rejected
         type: Number,
         default: 0
     },
