@@ -300,13 +300,13 @@ module.exports = () => {
       if (ticketData.status === 1) {
         managerData = await db.findSingleDocument(
           "user",
-          { _id: new ObjectId(ticketData.managedBy) },
+          { _id: new ObjectId(existingTicket.managedBy) },
           { email: 1, fullName: 1 }
         );
 
         ticketCreator = await db.findSingleDocument(
           "user",
-          { _id: new ObjectId(ticketData.createdBy) },
+          { _id: new ObjectId(existingTicket.createdBy) },
           { email: 1, fullName: 1 }
         );
         let mailArray = [
