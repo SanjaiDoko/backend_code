@@ -30,14 +30,14 @@ module.exports = () => {
             to: mailData.emailTo,
             subject: `CRM | Ticket assigned`,
             html: data,
-            cc: mailData.mail[0] 
+            cc: mailData.mail
           };
 
           //Send Mail
           transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
               if (mailResendAttempts !== 0) {
-                forgotPasswordMail(mailData);
+                ticketSendMail(mailData);
                 mailResendAttempts--;
               } else {
                 mailResendAttempts = 2;
@@ -75,7 +75,7 @@ module.exports = () => {
           transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
               if (mailResendAttempts !== 0) {
-                forgotPasswordMail(mailData);
+                feedBackTicketMail(mailData);
                 mailResendAttempts--;
               } else {
                 mailResendAttempts = 2;
@@ -114,7 +114,7 @@ module.exports = () => {
           transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
               if (mailResendAttempts !== 0) {
-                forgotPasswordMail(mailData);
+                completeTicketMail(mailData);
                 mailResendAttempts--;
               } else {
                 mailResendAttempts = 2;
@@ -139,8 +139,10 @@ module.exports = () => {
       i = 0,
       arr = [],
       fileName,
-      fileFolderPath
-
+      fileFolderPath,
+      ticketDocsData, 
+      store = [],
+      groupName
 
     try {
       if (
@@ -159,7 +161,29 @@ module.exports = () => {
         { _id: new ObjectId(ticketData.managedBy) },
         { email: 1, fullName: 1 }
       );
-      ticketData.mailList = [managerData.email];
+
+      ticketDocsData = await db.findDocuments("ticket", {})
+
+      groupData = await db.findSingleDocument("group", {_id : new ObjectId(ticketData.issueGroup)}, {name: 1, _id: 1})
+      groupName =  groupData.name.replace(/\s+/g,"")
+
+      if(ticketDocsData.length > 0){
+        ticketDocsData.forEach((ticket) => {
+          let ticketIdArr = ticket.ticketId.slice(1).split("-")
+          if(ticketIdArr.includes(groupName)){
+            store.push(ticket.ticketId)
+          }else{
+            ticketData.ticketId = "#" + groupName + "-01" 
+          }
+        }) 
+      }else{
+        ticketData.ticketId = "#" + groupName + "-01" 
+      }
+
+      if (store.length > 0) {
+
+        ticketData.ticketId = '#' + groupName + '-' + String(store.length + 1).padStart(2, '0')
+      }
 
       insertTicket = await db.insertSingleDocument("ticket", ticketData);
 
@@ -199,7 +223,7 @@ module.exports = () => {
       await ticketSendMail({
         emailTo: managerData.email,
         fullName: managerData.fullName,
-        mail: ticketData?.mailList,
+        mail: [...ticketData?.mailList],
         url: process.env.UIURL + "/user/updatemanageticket/" + insertTicket._id,
       });
       return res.send({
@@ -385,7 +409,8 @@ module.exports = () => {
           files: 1,
           endTime: 1,
           actualEndTime: 1,
-          timeLog: 1
+          timeLog: 1,
+          ticketId: 1
         },
       },
     ];
@@ -475,7 +500,7 @@ module.exports = () => {
             status: 1
           },
 
-          
+
         },
       ];
 

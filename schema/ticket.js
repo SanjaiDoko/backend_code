@@ -3,7 +3,12 @@ const ObjectId = mongoose.Schema.Types.ObjectId
 
 //User Schema
 let userSchema = mongoose.Schema({
- 
+    ticketId: {
+       type: String,
+       unique: true,
+        require: true,
+        trim: true
+    },
     issueName: {
         type: String,
         required: true
