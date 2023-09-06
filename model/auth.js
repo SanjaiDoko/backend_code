@@ -7,25 +7,33 @@ const { ObjectId } = require("bson");
 
 module.exports.ensureAuthorized = async (req, res, next) => {
   let token, decodedToken, verifyAccessToken, privateKey, checkSessionExist;
-  if (
-    req.headers.authorization &&
-    req.headers.authorization !== "" &&
-    req.headers.authorization !== null
-  ) {
-    token = req.headers.authorization;
-    token = token.substring(7);
-  }
-  decodedToken = jwt.decode(token);
-  checkSessionExist = await db.findOneDocumentExists("sessionManagement", {
-    userId: new ObjectId(decodedToken.userId),
-    jwt: token,
-  });
-  if (checkSessionExist === false) {
-    return res.status(401).send("Unauthorized");
-  }
 
-  privateKey = await fs.readFile("privateKey.key", "utf8");
+  
+  
   try {
+
+    if (
+      req.headers.authorization &&
+      req.headers.authorization !== "" &&
+      req.headers.authorization !== null
+    ) {
+      token = req.headers.authorization;
+      token = token.substring(7);
+    }
+    decodedToken = jwt.decode(token);
+    if(!decodedToken){
+      return res.status(401).send("Unauthorized");
+    }
+    checkSessionExist = await db.findOneDocumentExists("sessionManagement", {
+      userId: new ObjectId(decodedToken?.userId),
+      jwt: token,
+    });
+    if (checkSessionExist === false) {
+      return res.status(401).send("Unauthorized");
+    }
+  
+    privateKey = await fs.readFile("privateKey.key", "utf8");
+   
     verifyAccessToken = jwt.verify(token, privateKey, {
       algorithms: ["RS256"],
     });
