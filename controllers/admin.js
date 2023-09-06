@@ -113,15 +113,30 @@ module.exports = () => {
         { _id: 1, name: 1, managedBy: 1, users: 1, status: 1 }
       );
 
+      const countTicket = (data, status)=>{
+         return data.filter(doc=> doc.status === status).length
+      }
+
       for (let i = 0; i < groupData.length; i++) {
         let singleGroupData = {}
         singleGroupData.groupId = `${groupData[i]._doc._id}`
         singleGroupData.name = `${groupData[i]._doc.name}`
         singleGroupData.status = `${groupData[i]._doc.status}`
+
         let data = await db.findDocuments("user", { groupId: new ObjectId(groupData[i]._doc._id) },{_id:1, fullName:1,role:1})
+
+        //ticket Data
+        let ticketData = await db.findDocuments("ticket", { issueGroup: new ObjectId(groupData[i]._doc._id) },{status:1})
+
+        singleGroupData.openTicket = countTicket(ticketData,0)
+        singleGroupData.inProgressTicket = countTicket(ticketData,2)
+        singleGroupData.completedTicket = countTicket(ticketData,1)
+        singleGroupData.rejectedTicket = countTicket(ticketData,3)
+        singleGroupData.totalTicket = countTicket(ticketData)
         // Filter documents with role 3 = managedBy
         const managedBy = data.filter(doc => doc.role === 3);
         singleGroupData.managedBy = {name:managedBy[0]?.fullName, managedBy:managedBy[0]?._id}
+        
         // Filter documents with role 1
         const users = data.filter(doc => doc.role === 1);
         singleGroupData.users = users
