@@ -495,5 +495,40 @@ module.exports = () => {
     }
   };
 
+  //Insert Feed Back
+  // router.getAllChats = async (req, res) => {
+  //   let data = { status: 0, response: "Invalid request" },
+  //     feedBackData = req.body,
+  //     insertFeedBack,
+  //     userData
+
+  //   try {
+  //     if (Object.keys(feedBackData).length === 0 && feedBackData.data === undefined) {
+  //       res.send(data);
+
+  //       return;
+  //     }
+  //     feedBackData = feedBackData.data[0];
+  //     feedBackData.systemInfo = req.rawHeaders;
+
+  //     insertFeedBack = await db.insertSingleDocument("feedBack", feedBackData);
+
+  //     userData = await db.findSingleDocument("user", { _id: new ObjectId(feedBackData.createdById) },{_id:1, fullName:1, email:1})
+
+  //     await feedBackSendMail({
+  //       emailTo: userData.email,
+  //       fullName: userData.fullName,
+  //       // url: "http://localhost:5173/change-password/" + managerData._id + "/2",
+  //     });
+      
+  //     return res.send({
+  //       status: 1,
+  //       response: "FeedBack Sent successfully ",
+  //     });
+  //   } catch (error) {
+  //     return res.send(error.message);
+  //   }
+  // };
+
   return router;
 };
