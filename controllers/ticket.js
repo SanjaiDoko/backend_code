@@ -632,6 +632,20 @@ module.exports = () => {
           },
         },
         {
+          $lookup: {
+            from: "groups",
+            localField: "issueGroup",
+            foreignField: "_id",
+            as: "groupdetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$groupdetails",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
           $match: condition,
         },
         {
@@ -650,7 +664,8 @@ module.exports = () => {
             assignedName: "$assignedDetails.fullName",
             mailList: 1,
             endTime: 1,
-            timeLog: 1
+            timeLog: 1,
+            issueGroupName: "$groupdetails.name",
           },
         },
       ];
