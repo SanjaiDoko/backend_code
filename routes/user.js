@@ -31,6 +31,11 @@ module.exports = (app) => {
         app.post('/user/feedBack', userValidation.checkFeedBack, user.sendFeedBack)
 
         app.post('/user/updateStatus', ensureAuthorized,  user.updatedUserStatusById) 
+        
+        //chat
+        // app.post('/user/getChats', userValidation.checkChat,  user.getAllChats) 
+
+
 
         app.get("/crm",(req,res) => {
 
