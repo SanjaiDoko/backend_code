@@ -142,20 +142,20 @@ module.exports = () => {
         return res.send({ status: 0, response: message.invalidUserId });
       }
 
-      if (type === 1) {
+      if (userData.type === 1) {
         userDetails = await db.findSingleDocument(
           "user",
           { _id: userData.id },
           { fullName: 1, _id: 1, mobileNumber: 1, email: 1, role: 1 }
         );
-      } else if (type === 2) {
+      } else if (userData.type === 2) {
         userDetails = await db.findSingleDocument(
           "internal",
           { _id: userData.id },
           { fullName: 1, _id: 1, mobileNumber: 1, email: 1, role: 1 }
         );
       } else {
-        
+
         return res.send({ status: 0, response: "Type cannot be empty" });
       }
 
