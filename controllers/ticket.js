@@ -403,7 +403,7 @@ module.exports = () => {
           $project: {
             _id: 1,
             managerName: "$managerDetails.fullName",
-            managerId: "$managerDetails._id",
+            managerBy: "$managerDetails._id",
             issueName: 1,
             type: 1,
             issueDescription: 1,
@@ -492,7 +492,7 @@ module.exports = () => {
           $project: {
             _id: 1,
             managerName: "$managerDetails.fullName",
-            managerId: "$managerDetails._id",
+            managerBy: "$managerDetails._id",
             issueName: 1,
             type: 1,
             issueDescription: 1,
@@ -501,7 +501,7 @@ module.exports = () => {
             createdAt: 1,
             issueGroup: 1,
             assignedName: "$assignedDetails.fullName",
-            assignedId: "$assignedDetails._id",
+            assignedTo: "$assignedDetails._id",
             mailList: 1,
             files: 1,
             timeLog: 1,
@@ -583,8 +583,8 @@ module.exports = () => {
           $project: {
             _id: 1,
             managerName: "$managerDetails.fullName",
-            managerId: "$managerDetails._id",
-            assignedId: "$assignedDetails._id",
+            managerBy: "$managerDetails._id",
+            assignedTo: "$assignedDetails._id",
             issueName: 1,
             type: 1,
             issueDescription: 1,
@@ -685,8 +685,8 @@ module.exports = () => {
           $project: {
             _id: 1,
             managerName: "$managerDetails.fullName",
-            managerId: "$managerDetails._id",
-            assignedId: "$assignedDetails._id",
+            managerBy: "$managerDetails._id",
+            assignedTo: "$assignedDetails._id",
             issueName: 1,
             type: 1,
             issueDescription: 1,
