@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<% let capitalize=(text)=> { return text.replace(/(^\w|\s\w)/g, o =>
+  o.toUpperCase()) } %>
+
+  <head>
+  </head>
+  <body>
+      <table align="center" width="100%" class="floated-none" style="
+         font-size: 18px;
+         padding: 30px;
+         background-color: rgb(248, 248, 248);
+         max-width: 600px !important
+          " role="presentation">
+        <tbody>
+      
+          <tr style="padding: 30 30px 30px 30px !important;">
+            <td>
+            <h3>Dear <strong>
+                <%= capitalize(fullName)%>
+              </strong>,</h3>
+            <p>
+              Ticket is completed. Please check it.
+            </p>
+            <p>
+              Use the following link for viewing the ticket.
+              <strong><a class="validating" href="<%= url %>" style="font-weight: bold" target="_blank"
+                  rel="noopener noreferrer">Click Here</a></strong>
+            </p>
+            <p>Regards,</p>
+            <p><strong>CRM</strong></p>
+          </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </body>
+</html>
