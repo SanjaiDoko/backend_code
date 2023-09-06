@@ -58,6 +58,10 @@ let userSchema = mongoose.Schema({
     files:{
         type:Array
     },
+    assignedMail: {
+        type: Number,
+        default: 0
+    },
     status: {               // 1 - active, 2 - deactive, 0 - delete
         type: Number,
         default: 0

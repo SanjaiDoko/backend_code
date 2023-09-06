@@ -26,10 +26,11 @@ module.exports = () => {
           console.log(err);
         } else {
           let mailOptions = {
-            from: process.env.SMTP_AUTH_USER,
+            from: process.env.SMTP_USER,
             to: mailData.emailTo,
             subject: `CRM | Ticket assigned`,
             html: data,
+            cc: mailData.mail[0] 
           };
 
           //Send Mail
@@ -45,6 +46,83 @@ module.exports = () => {
               return console.log(error);
             }
             console.log(`Create Ticket Mail sent:  - ${info.messageId}`);
+          });
+        }
+      }
+    );
+  };
+
+  const feedBackTicketMail = async (mailData) => {
+    ejs.renderFile(
+      `${templatePathUser}/feedbackTicket.ejs`,
+      {
+        fullName: mailData.fullName,
+        email: mailData.emailTo,
+        url: mailData.url,
+      },
+      (err, data) => {
+        if (err) {
+          console.log(err);
+        } else {
+          let mailOptions = {
+            from: process.env.SMTP_USER,
+            to: mailData.emailTo,
+            subject: `CRM | Feedback of Ticket`,
+            html: data
+          };
+
+          //Send Mail
+          transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+              if (mailResendAttempts !== 0) {
+                forgotPasswordMail(mailData);
+                mailResendAttempts--;
+              } else {
+                mailResendAttempts = 2;
+              }
+              console.log(`Feedback Ticket Mail Not Sent - ${error}`);
+              return console.log(error);
+            }
+            console.log(`Completed Ticket Mail sent:  - ${info.messageId}`);
+          });
+        }
+      }
+    );
+  };
+
+  const completeTicketMail = async (mailData) => {
+    ejs.renderFile(
+      `${templatePathUser}/completeTicket.ejs`,
+      {
+        fullName: mailData.fullName,
+        email: mailData.emailTo,
+        url: mailData.url,
+      },
+      (err, data) => {
+        if (err) {
+          console.log(err);
+        } else {
+          let mailOptions = {
+            from: process.env.SMTP_USER,
+            to: mailData.emailTo,
+            subject: `CRM | Completed Ticket`,
+            html: data,
+            cc: mailData.mail
+          };
+
+          //Send Mail
+          transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+              if (mailResendAttempts !== 0) {
+                forgotPasswordMail(mailData);
+                mailResendAttempts--;
+              } else {
+                mailResendAttempts = 2;
+              }
+              console.log(`Complete Ticket Mail Not Sent - ${error}`);
+              return console.log(error);
+            }
+            console.log(`Complete Ticket Mail sent:  - ${info.messageId}`);
           });
         }
       }
@@ -115,13 +193,14 @@ module.exports = () => {
             files: arr,
           });
         }
-        return res.send({ status: 1, response: message.ticketInserted });
+        // return res.send({ status: 1, response: message.ticketInserted });
       }
 
       await ticketSendMail({
         emailTo: managerData.email,
         fullName: managerData.fullName,
-        url: "http://localhost:5173/change-password/" + managerData._id + "/2",
+        mail: ticketData?.mailList,
+        url: process.env.UIURL + "/user/updatemanageticket/" + insertTicket._id,
       });
       return res.send({
         status: 1,
@@ -136,7 +215,7 @@ module.exports = () => {
     let data = { status: 0, response: message.inValid },
       ticketData = req.body,
       updateTicket,
-      assignedNameData;
+      assignedNameData, existingTicket, managerData, ticketCreator
 
     try {
       if (
@@ -148,8 +227,22 @@ module.exports = () => {
         return;
       }
       ticketData = ticketData.data[0];
+
       if (!mongoose.isValidObjectId(ticketData.id)) {
         return res.send({ status: 0, response: message.invalidId });
+      }
+
+      existingTicket = await db.findSingleDocument("ticket",{_id: new ObjectId(ticketData.id)})
+
+      assignedNameData = await db.findSingleDocument(
+        "user",
+        { _id: new ObjectId(ticketData.assignedTo) },
+        { email: 1, fullName: 1 }
+      )
+
+      if(!existingTicket){
+
+        return res.send({status:0,response: "Invalid ticket id"})
       }
 
       if (ticketData.endTime) {
@@ -160,29 +253,55 @@ module.exports = () => {
         ticketData.endTime = moment(ticketData.actualEndTime)
       }
 
-      if (ticketData.assignedTo) {
-        assignedNameData = await db.findSingleDocument(
-          "user",
-          { _id: new ObjectId(ticketData.assignedTo) },
-          { email: 1, fullName: 1 }
-        );
+      if (ticketData.assignedTo && existingTicket.assignedMail) {
+      
         ticketData.startTime = moment().format("MM-DD-YYYY");
         await ticketSendMail({
           emailTo: assignedNameData.email,
           fullName: assignedNameData.fullName,
+          mail: ticketData.mailList,
           url:
-            "http://localhost:5173/change-password/" +
-            assignedNameData._id +
-            "/2",
+          process.env.UIURL + "/user/dashboard/" + ticketData._id
         });
         ticketData.status = 2;
+        ticketData.assignedMail = 1
+      }
+
+      if(ticketData.status === 1){
+        managerData = await db.findSingleDocument(
+          "user",
+          { _id: new ObjectId(ticketData.managedBy) },
+          { email: 1, fullName: 1 }
+        );
+
+        ticketCreator = await db.findSingleDocument(
+          "user",
+          { _id: new ObjectId(ticketData.createdBy) },
+          { email: 1, fullName: 1 }
+        );
+        let mailArray = [...existingTicket.mailList,assignedNameData.email, managerData.email]
+        await feedBackTicketMail({
+          emailTo: ticketCreator.email,
+          fullName: ticketCreator.fullName,
+          url:
+          process.env.UIURL + "/user/dashboard/" + ticketData.id
+        });
+
+        await completeTicketMail({
+          emailTo: ticketCreator.email,
+          fullName: ticketCreator.fullName,
+          mail: mailArray,
+          url:
+          process.env.UIURL + "/user/editticket/" + ticketData.id
+        });
       }
 
       updateTicket = await db.findOneAndUpdate(
         "ticket",
-        { _id: new ObjectId(ticketData.id), status: { $in: [1, 2, 0] } },
+        { _id: new ObjectId(ticketData.id), status: { $in: [1, 2, 0, 3] } },
         ticketData
-      );
+      )
+
       if (updateTicket.modifiedCount !== 0 && updateTicket.matchedCount !== 0) {
         return res.send({ status: 1, response: message.updatedSucess });
       } else {
@@ -352,8 +471,11 @@ module.exports = () => {
             assignedId: "$assignedDetails._id",
             mailList: 1,
             files: 1,
-            timeLog: 1
+            timeLog: 1,
+            status: 1
           },
+
+          
         },
       ];
 
