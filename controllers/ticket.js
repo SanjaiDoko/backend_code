@@ -30,14 +30,14 @@ module.exports = () => {
             to: mailData.emailTo,
             subject: `CRM | Ticket assigned`,
             html: data,
-            cc: mailData.mail[0] 
+            cc: mailData.mail,
           };
 
           //Send Mail
           transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
               if (mailResendAttempts !== 0) {
-                forgotPasswordMail(mailData);
+                ticketSendMail(mailData);
                 mailResendAttempts--;
               } else {
                 mailResendAttempts = 2;
@@ -68,14 +68,14 @@ module.exports = () => {
             from: process.env.SMTP_USER,
             to: mailData.emailTo,
             subject: `CRM | Feedback of Ticket`,
-            html: data
+            html: data,
           };
 
           //Send Mail
           transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
               if (mailResendAttempts !== 0) {
-                forgotPasswordMail(mailData);
+                feedBackTicketMail(mailData);
                 mailResendAttempts--;
               } else {
                 mailResendAttempts = 2;
@@ -107,14 +107,14 @@ module.exports = () => {
             to: mailData.emailTo,
             subject: `CRM | Completed Ticket`,
             html: data,
-            cc: mailData.mail
+            cc: mailData.mail,
           };
 
           //Send Mail
           transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
               if (mailResendAttempts !== 0) {
-                forgotPasswordMail(mailData);
+                completeTicketMail(mailData);
                 mailResendAttempts--;
               } else {
                 mailResendAttempts = 2;
@@ -139,8 +139,10 @@ module.exports = () => {
       i = 0,
       arr = [],
       fileName,
-      fileFolderPath
-
+      fileFolderPath,
+      ticketDocsData,
+      store = [],
+      groupName;
 
     try {
       if (
@@ -159,7 +161,33 @@ module.exports = () => {
         { _id: new ObjectId(ticketData.managedBy) },
         { email: 1, fullName: 1 }
       );
-      ticketData.mailList = [managerData.email];
+
+      ticketDocsData = await db.findDocuments("ticket", {});
+
+      groupData = await db.findSingleDocument(
+        "group",
+        { _id: new ObjectId(ticketData.issueGroup) },
+        { name: 1, _id: 1 }
+      );
+      groupName = groupData.name.replace(/\s+/g, "");
+
+      if (ticketDocsData.length > 0) {
+        ticketDocsData.forEach((ticket) => {
+          let ticketIdArr = ticket.ticketId.slice(1).split("-");
+          if (ticketIdArr.includes(groupName)) {
+            store.push(ticket.ticketId);
+          } else {
+            ticketData.ticketId = "#" + groupName + "-01";
+          }
+        });
+      } else {
+        ticketData.ticketId = "#" + groupName + "-01";
+      }
+
+      if (store.length > 0) {
+        ticketData.ticketId =
+          "#" + groupName + "-" + String(store.length + 1).padStart(2, "0");
+      }
 
       insertTicket = await db.insertSingleDocument("ticket", ticketData);
 
@@ -180,13 +208,13 @@ module.exports = () => {
               ticketData.files[i].fileData.split(",")[1],
               "base64"
             );
-           fileFolderPath = filePath.split("\\fileUploads\\").pop()
-           fileName = filePath.split("/")[1]
-          
-           filePath = {
-            fileName: fileName,
-            filePath: `fileUploads/${fileFolderPath}`
-           }
+            fileFolderPath = filePath.split("\\fileUploads\\").pop();
+            fileName = filePath.split("/")[1];
+
+            filePath = {
+              fileName: fileName,
+              filePath: `fileUploads/${fileFolderPath}`,
+            };
             arr.push(filePath);
           }
           await db.findByIdAndUpdate("ticket", insertTicket._id, {
@@ -199,7 +227,7 @@ module.exports = () => {
       await ticketSendMail({
         emailTo: managerData.email,
         fullName: managerData.fullName,
-        mail: ticketData?.mailList,
+        mail: [...ticketData?.mailList],
         url: process.env.UIURL + "/user/updatemanageticket/" + insertTicket._id,
       });
       return res.send({
@@ -215,7 +243,10 @@ module.exports = () => {
     let data = { status: 0, response: message.inValid },
       ticketData = req.body,
       updateTicket,
-      assignedNameData, existingTicket, managerData, ticketCreator
+      assignedNameData,
+      existingTicket,
+      managerData,
+      ticketCreator;
 
     try {
       if (
@@ -232,67 +263,68 @@ module.exports = () => {
         return res.send({ status: 0, response: message.invalidId });
       }
 
-      existingTicket = await db.findSingleDocument("ticket",{_id: new ObjectId(ticketData.id)})
+      existingTicket = await db.findSingleDocument("ticket", {
+        _id: new ObjectId(ticketData.id),
+      });
 
       assignedNameData = await db.findSingleDocument(
         "user",
         { _id: new ObjectId(ticketData.assignedTo) },
         { email: 1, fullName: 1 }
-      )
+      );
 
-      if(!existingTicket){
-
-        return res.send({status:0,response: "Invalid ticket id"})
+      if (!existingTicket) {
+        return res.send({ status: 0, response: "Invalid ticket id" });
       }
 
       if (ticketData.endTime) {
-        ticketData.endTime = moment(ticketData.endTime, "DD-MM-YYYYTHH:mm:ss")
+        ticketData.endTime = moment(ticketData.endTime, "DD-MM-YYYYTHH:mm:ss");
       }
 
       if (ticketData.actualEndTime) {
-        ticketData.endTime = moment(ticketData.actualEndTime)
+        ticketData.actualEndTime = moment(ticketData.actualEndTime);
       }
 
-      if (ticketData.assignedTo && existingTicket.assignedMail) {
-      
+      if (ticketData.assignedTo && existingTicket.assignedMail === 0) {
         ticketData.startTime = moment().format("MM-DD-YYYY");
         await ticketSendMail({
           emailTo: assignedNameData.email,
           fullName: assignedNameData.fullName,
           mail: ticketData.mailList,
-          url:
-          process.env.UIURL + "/user/dashboard/" + ticketData._id
+          url: process.env.UIURL + "/user/dashboard/" + ticketData._id,
         });
         ticketData.status = 2;
-        ticketData.assignedMail = 1
+        ticketData.assignedMail = 1;
       }
 
-      if(ticketData.status === 1){
+      if (ticketData.status === 1) {
         managerData = await db.findSingleDocument(
           "user",
-          { _id: new ObjectId(ticketData.managedBy) },
+          { _id: new ObjectId(existingTicket.managedBy) },
           { email: 1, fullName: 1 }
         );
 
         ticketCreator = await db.findSingleDocument(
           "user",
-          { _id: new ObjectId(ticketData.createdBy) },
+          { _id: new ObjectId(existingTicket.createdBy) },
           { email: 1, fullName: 1 }
         );
-        let mailArray = [...existingTicket.mailList,assignedNameData.email, managerData.email]
+        let mailArray = [
+          ...existingTicket.mailList,
+          assignedNameData.email,
+          managerData.email,
+        ];
         await feedBackTicketMail({
           emailTo: ticketCreator.email,
           fullName: ticketCreator.fullName,
-          url:
-          process.env.UIURL + "/user/dashboard/" + ticketData.id
+          url: process.env.UIURL + "/user/dashboard/" + ticketData.id,
         });
 
         await completeTicketMail({
           emailTo: ticketCreator.email,
           fullName: ticketCreator.fullName,
           mail: mailArray,
-          url:
-          process.env.UIURL + "/user/editticket/" + ticketData.id
+          url: process.env.UIURL + "/user/editticket/" + ticketData.id,
         });
       }
 
@@ -300,7 +332,7 @@ module.exports = () => {
         "ticket",
         { _id: new ObjectId(ticketData.id), status: { $in: [1, 2, 0, 3] } },
         ticketData
-      )
+      );
 
       if (updateTicket.modifiedCount !== 0 && updateTicket.matchedCount !== 0) {
         return res.send({ status: 1, response: message.updatedSucess });
@@ -316,93 +348,96 @@ module.exports = () => {
     }
   };
 
-  router.getTicketById = async (req,res) => {
+  router.getTicketById = async (req, res) => {
     let data = { status: 0, response: message.inValid },
-    ticketData = req.body,
-    ticketsData;
+      ticketData = req.body,
+      ticketsData;
 
-  try {
-    if (
-      Object.keys(ticketData).length === 0 &&
-      ticketData.data === undefined
-    ) {
+    try {
+      if (
+        Object.keys(ticketData).length === 0 &&
+        ticketData.data === undefined
+      ) {
+        res.send(data);
+
+        return;
+      }
+      ticketData = ticketData.data[0];
+      if (!mongoose.isValidObjectId(ticketData.id)) {
+        return res.send({ status: 0, response: message.invalidId });
+      }
+      condition = {
+        _id: new ObjectId(ticketData.id),
+        status: { $in: [1, 2, 0, 3] },
+      };
+      const aggregationQuery = [
+        {
+          $lookup: {
+            from: "users",
+            localField: "managedBy",
+            foreignField: "_id",
+            as: "managerDetails",
+          },
+        },
+        {
+          $unwind: "$managerDetails",
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "assignedTo",
+            foreignField: "_id",
+            as: "assignedDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$assignedDetails",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $match: condition,
+        },
+        {
+          $project: {
+            _id: 1,
+            managerName: "$managerDetails.fullName",
+            managerBy: "$managerDetails._id",
+            issueName: 1,
+            type: 1,
+            issueDescription: 1,
+            mailList: 1,
+            status: 1,
+            createdAt: 1,
+            issueGroup: 1,
+            assignedName: "$assignedDetails.fullName",
+            assignedTo: "$assignedDetails._id",
+            mailList: 1,
+            files: 1,
+            endTime: 1,
+            actualEndTime: 1,
+            timeLog: 1,
+            ticketId: 1,
+            problem: 1,
+            resolution: 1
+          },
+        },
+      ];
+
+      ticketsData = await db.getAggregation("ticket", aggregationQuery);
+
+      if (ticketsData) {
+        return res.send({ status: 1, data: JSON.stringify(ticketsData) });
+      }
+    } catch (error) {
+      console.log(
+        `Error in country controller - getCountryList: ${error.message}`
+      );
+      data.response = error.message;
       res.send(data);
-
-      return;
     }
-    ticketData = ticketData.data[0];
-    if (!mongoose.isValidObjectId(ticketData.id)) {
-      return res.send({ status: 0, response: message.invalidId });
-    }
-    condition = {
-      _id: new ObjectId(ticketData.id),
-      status: { $in: [1, 2, 0, 3] },
-    };
-    const aggregationQuery = [
-      {
-        $lookup: {
-          from: "users",
-          localField: "managedBy",
-          foreignField: "_id",
-          as: "managerDetails",
-        },
-      },
-      {
-        $unwind: "$managerDetails",
-      },
-      {
-        $lookup: {
-          from: "users",
-          localField: "assignedTo",
-          foreignField: "_id",
-          as: "assignedDetails",
-        },
-      },
-      {
-        $unwind: {
-          path: "$assignedDetails",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      {
-        $match: condition,
-      },
-      {
-        $project: {
-          _id: 1,
-          managerName: "$managerDetails.fullName",
-          managerId: "$managerDetails._id",
-          issueName: 1,
-          type: 1,
-          issueDescription: 1,
-          mailList: 1,
-          status: 1,
-          createdAt: 1,
-          issueGroup: 1,
-          assignedName: "$assignedDetails.fullName",
-          assignedTo: "$assignedDetails._id",
-          mailList: 1,
-          files: 1,
-          endTime: 1,
-          actualEndTime: 1,
-          timeLog: 1
-        },
-      },
-    ];
-
-    ticketsData = await db.getAggregation("ticket", aggregationQuery);
-
-    if (ticketsData) {
-      return res.send({ status: 1, data: JSON.stringify(ticketsData) });
-    }
-  } catch (error) {
-    console.log(
-      `Error in country controller - getCountryList: ${error.message}`
-    );
-    data.response = error.message;
-    res.send(data);
-  }
-  }
+  };
 
   router.getTicketsByUserId = async (req, res) => {
     let data = { status: 0, response: message.inValid },
@@ -459,7 +494,7 @@ module.exports = () => {
           $project: {
             _id: 1,
             managerName: "$managerDetails.fullName",
-            managerId: "$managerDetails._id",
+            managerBy: "$managerDetails._id",
             issueName: 1,
             type: 1,
             issueDescription: 1,
@@ -468,14 +503,13 @@ module.exports = () => {
             createdAt: 1,
             issueGroup: 1,
             assignedName: "$assignedDetails.fullName",
-            assignedId: "$assignedDetails._id",
+            assignedTo: "$assignedDetails._id",
             mailList: 1,
             files: 1,
             timeLog: 1,
-            status: 1
+            status: 1,
+            ticketId: 1
           },
-
-          
         },
       ];
 
@@ -551,8 +585,8 @@ module.exports = () => {
           $project: {
             _id: 1,
             managerName: "$managerDetails.fullName",
-            managerId: "$managerDetails._id",
-            assignedId: "$assignedDetails._id",
+            managerBy: "$managerDetails._id",
+            assignedTo: "$assignedDetails._id",
             issueName: 1,
             type: 1,
             issueDescription: 1,
@@ -564,7 +598,8 @@ module.exports = () => {
             mailList: 1,
             files: 1,
             endTime: 1,
-            timeLog: 1
+            timeLog: 1,
+            ticketId: 1
           },
         },
       ];
@@ -632,14 +667,28 @@ module.exports = () => {
           },
         },
         {
+          $lookup: {
+            from: "groups",
+            localField: "issueGroup",
+            foreignField: "_id",
+            as: "groupdetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$groupdetails",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
           $match: condition,
         },
         {
           $project: {
             _id: 1,
             managerName: "$managerDetails.fullName",
-            managerId: "$managerDetails._id",
-            assignedId: "$assignedDetails._id",
+            managerBy: "$managerDetails._id",
+            assignedTo: "$assignedDetails._id",
             issueName: 1,
             type: 1,
             issueDescription: 1,
@@ -650,7 +699,9 @@ module.exports = () => {
             assignedName: "$assignedDetails.fullName",
             mailList: 1,
             endTime: 1,
-            timeLog: 1
+            timeLog: 1,
+            issueGroupName: "$groupdetails.name",
+            ticketId: 1
           },
         },
       ];
