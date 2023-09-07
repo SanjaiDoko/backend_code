@@ -132,7 +132,7 @@ module.exports = () => {
         singleGroupData.inProgressTicket = countTicket(ticketData,2)
         singleGroupData.completedTicket = countTicket(ticketData,1)
         singleGroupData.rejectedTicket = countTicket(ticketData,3)
-        singleGroupData.totalTicket = countTicket(ticketData)
+        singleGroupData.totalTicket = ticketData.length
         // Filter documents with role 3 = managedBy
         const managedBy = data.filter(doc => doc.role === 3);
         singleGroupData.managedBy = {name:managedBy[0]?.fullName, managedBy:managedBy[0]?._id}
