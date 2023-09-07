@@ -282,10 +282,10 @@ module.exports = () => {
       }
 
       if (ticketData.actualEndTime) {
-        ticketData.endTime = moment(ticketData.actualEndTime);
+        ticketData.actualEndTime = moment(ticketData.actualEndTime);
       }
 
-      if (ticketData.assignedTo && existingTicket.assignedMail) {
+      if (ticketData.assignedTo && existingTicket.assignedMail === 0) {
         ticketData.startTime = moment().format("MM-DD-YYYY");
         await ticketSendMail({
           emailTo: assignedNameData.email,
@@ -419,6 +419,8 @@ module.exports = () => {
             actualEndTime: 1,
             timeLog: 1,
             ticketId: 1,
+            problem: 1,
+            resolution: 1
           },
         },
       ];
