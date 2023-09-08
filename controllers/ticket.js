@@ -7,6 +7,7 @@ const { message } = require("../model/message");
 const { ObjectId } = require("bson");
 const { default: mongoose } = require("mongoose");
 const moment = require("moment");
+const  fs  = require("fs");
 
 module.exports = () => {
   let router = {},
@@ -428,6 +429,15 @@ module.exports = () => {
       ticketsData = await db.getAggregation("ticket", aggregationQuery);
 
       if (ticketsData) {
+        if(ticketsData[0].files.length > 0){
+          ticketsData[0].files = ticketsData[0].files.map((fileData) => {
+            const dirPath = path.resolve(`./${fileData.filePath}`)
+            return {
+              ...fileData,
+              filePath:`data:application/pdf;base64,${fs.readFileSync(dirPath,{encoding:"base64"})}`
+            }
+          })
+        }
         return res.send({ status: 1, data: JSON.stringify(ticketsData) });
       }
     } catch (error) {
