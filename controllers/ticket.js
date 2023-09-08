@@ -215,8 +215,8 @@ module.exports = () => {
             fileName = filePath.split("/")[1];
 
             filePath = {
-              fileName: fileName,
-              filePath: `fileUploads/${fileFolderPath}`,
+              fileName: ticketData.files[i].fileName,
+              filePath: `fileUploads/${insertTicket._id}/${ticketData.files[i].fileName}`,
             };
             arr.push(filePath);
           }
