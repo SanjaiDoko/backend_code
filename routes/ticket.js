@@ -12,6 +12,10 @@ module.exports = (app) => {
 
     app.post("/ticket/updateTicket", ensureAuthorized, ticketValidation.updateTicket, ticket.updateTicket)
 
+    app.post("/ticket/managerUpdateTicket", ensureAuthorized, ticketValidation.managerUpdateTicket, ticket.managerUpdateTicket)
+
+    app.post("/ticket/assignedUpdateTicket", ensureAuthorized, ticketValidation.assignedUpdateTicket, ticket.assignedUpdateTicket)
+
     app.post("/ticket/getAllRecievedTicketsByManagerId", ensureAuthorized, ticketValidation.checkId, ticket.getAllRecievedTicketsManagerId)
 
     app.post("/ticket/getAllRecievedTicketsByUserId", ensureAuthorized, ticketValidation.checkId, ticket.getAllRecievedTicketsByUserId)

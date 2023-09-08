@@ -63,5 +63,38 @@ module.exports = function (app, io) {
     },
   ];
 
+  validator.assignedUpdateTicket = [
+    check("data").notEmpty().withMessage("Data cannot be empty"),
+    check("data.*.id").trim().notEmpty().withMessage("Id cannot be empty"),
+    check("data.*.problem").trim().notEmpty().withMessage("Problem cannot be empty"),
+    check("data.*.resolution").trim().notEmpty().withMessage("Resolution cannot be empty"),
+    check("data.*.actualEndTime").trim().notEmpty().withMessage("ActualEndTime cannot be empty"),
+    check("data.*.status").notEmpty().withMessage("Status cannot be empty"),
+    check("data.*.timeLog").trim().notEmpty().withMessage("TimeLog cannot be empty"),
+    (req, res, next) => {
+      const errors = validationResult(req).array();
+      if (errors.length > 0) {
+        return res.send({ status: 0, response: errors[0].msg });
+      }
+
+      return next();
+    },
+  ];
+
+  validator.managerUpdateTicket = [
+    check("data").notEmpty().withMessage("Data cannot be empty"),
+    check("data.*.id").trim().notEmpty().withMessage("Id cannot be empty"),
+    check("data.*.assignedTo").trim().notEmpty().withMessage("Problem cannot be empty"),
+    check("data.*.endTime").trim().notEmpty().withMessage("EndTime cannot be empty"),
+    (req, res, next) => {
+      const errors = validationResult(req).array();
+      if (errors.length > 0) {
+        return res.send({ status: 0, response: errors[0].msg });
+      }
+
+      return next();
+    },
+  ];
+
   return validator;
 };
