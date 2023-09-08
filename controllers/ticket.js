@@ -270,28 +270,12 @@ module.exports = () => {
         _id: new ObjectId(ticketData.id),
       });
 
-      let token = req.headers.authorization;
-      token = token.substring(7);
-
       assignedNameData = await db.findSingleDocument(
         "user",
         { _id: new ObjectId(ticketData.assignedTo) },
         { email: 1, fullName: 1 }
       );
 
-      let decodedToken = jwt.decode(token);
-      if (!decodedToken) {
-        return res.status(401).send("Unauthorized");
-      } else {
-        if (
-          !(
-            decodedToken.userId === existingTicket?.assignedTo.toString() ||
-            decodedToken.userId === existingTicket.managedBy.toString()
-          )
-        ) {
-          return res.status(401).send("Unauthorized");
-        }
-      }
 
       if (!existingTicket) {
         return res.send({ status: 0, response: "Invalid ticket id" });
