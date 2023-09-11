@@ -575,9 +575,28 @@ module.exports = () => {
         return res.send(data)
       }
       eodPayload = eodPayload.data[0]
-      eods = await db.findDocuments("eod",{createdBy: new ObjectId(eodPayload.id)},{systemInfo: 0})
+      eods = await db.findDocuments("eod",{createdBy: new ObjectId(eodPayload.id)},{systemInfo: 0, updatedAt: 0})
 
-      return res.send({status:1, data: eods})
+      return res.send({status:1, data: JSON.stringify(eods)})
+      
+    }catch(error){
+      console.log(`Error in user controller - login: ${error.message}`)
+      res.send(error.message)
+    }
+  }
+
+  router.getEodsByManagerId = async (req,res) => {
+    let data = { status: 0, response: "Invalid Request" }, eodPayload = req.body, eods
+    
+    try{
+      if (Object.keys(eodPayload).length === 0 && eodPayload.data === undefined) {
+        
+        return res.send(data)
+      }
+      eodPayload = eodPayload.data[0]
+      eods = await db.findDocuments("eod",{managedByBy: new ObjectId(eodPayload.id)},{systemInfo: 0, updatedAt: 0})
+
+      return res.send({status:1, data: JSON.stringify(eods)})
       
     }catch(error){
       console.log(`Error in user controller - login: ${error.message}`)
