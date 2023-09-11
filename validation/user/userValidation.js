@@ -145,10 +145,10 @@ module.exports = function (app, io) {
   validator.insertEod = [
     check("data").notEmpty().withMessage("Data cannot be empty"),
     check("data.*.groupId").notEmpty().withMessage("Group Id cannot be empty"),
-    check("data.*.createdById")
+    check("data.*.createdBy")
       .notEmpty()
-      .withMessage("CreatedById cannot be empty"),
-      check("data.*.eodData").trim().notEmpty().withMessage("Group Id cannot be empty"),
+      .withMessage("CreatedBy cannot be empty"),
+      check("data.*.eodDate").trim().notEmpty().withMessage("EodDate Id cannot be empty"),
       check("data.*.eodSummary").isArray().withMessage("EodSummary must be array"),
       check("data.*.ccMail").isArray().withMessage("CCMail must be array"),
     (req, res, next) => {
