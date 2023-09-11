@@ -44,6 +44,8 @@ module.exports = (app) => {
 
         app.post('/eod/getEodsByMangerId', user.getEodsByManagerId)
 
+        app.post('/eod/getEodDetailsById', userValidation.checkId, user.getEodDetailsById)
+
         app.get("/crm",(req,res) => {
 
             return res.send("welcome to the crm")

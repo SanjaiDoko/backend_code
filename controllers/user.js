@@ -628,5 +628,42 @@ module.exports = () => {
     }
   };
 
+  router.getEodDetailsById = async (req, res) => {
+    let data = { status: 0, response: message.inValid },
+      eodPayload = req.body,
+      eodData;
+
+    try {
+      if (
+        Object.keys(eodPayload).length === 0 &&
+        eodPayload.data === undefined
+      ) {
+        res.send(data);
+
+        return;
+      }
+      eodPayload = eodPayload.data[0];
+      if (!mongoose.isValidObjectId(eodPayload.id)) {
+        return res.send({ status: 0, response: message.invalidId });
+      }
+
+      eodData = await db.findDocuments('eod', {_id: new ObjectId(eodPayload.id)}, {systemInfo: 0, updatedAt: 0})
+
+      if(eodData){
+
+        return res.send({status: 1, data: JSON.stringify(eodData) })
+      }
+
+      res.send(data)
+
+    } catch (error) {
+      console.log(
+        `Error in country controller - getCountryList: ${error.message}`
+      );
+      data.response = error.message;
+      res.send(data);
+    }
+  };
+
   return router;
 };
