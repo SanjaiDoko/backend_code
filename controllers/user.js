@@ -7,6 +7,7 @@ const path = require("path");
 const { message } = require("../model/message");
 const { ObjectId } = require("bson");
 const { default: mongoose } = require("mongoose");
+const moment = require('moment')
 // const db = require('../model/mongodb')
 
 module.exports = () => {
@@ -155,7 +156,6 @@ module.exports = () => {
           { fullName: 1, _id: 1, mobileNumber: 1, email: 1, role: 1 }
         );
       } else {
-
         return res.send({ status: 0, response: "Type cannot be empty" });
       }
 
@@ -520,7 +520,7 @@ module.exports = () => {
   //       fullName: userData.fullName,
   //       // url: "http://localhost:5173/change-password/" + managerData._id + "/2",
   //     });
-      
+
   //     return res.send({
   //       status: 1,
   //       response: "FeedBack Sent successfully ",
@@ -532,77 +532,101 @@ module.exports = () => {
 
   //Inseert Eod
 
-  router.insertEod = async (req,res) => {
-    let data = { status: 0, response: "Invalid Request" }, eodData = req.body, insertEod, managerId
-    
-    try{
+  router.insertEod = async (req, res) => {
+    let data = { status: 0, response: "Invalid Request" },
+      eodData = req.body,
+      insertEod,
+      managerId;
+
+    try {
       if (Object.keys(eodData).length === 0 && eodData.data === undefined) {
-        
-        return res.send(data)
+        return res.send(data);
       }
-      eodData = eodData.data[0]
-      eodData.systemInfo = req.rawHeaders
+      eodData = eodData.data[0];
+      eodData.systemInfo = req.rawHeaders;
 
-      managerId = await db.findSingleDocument("group",{_id: new ObjectId(eodData.groupId)}, {managedBy: 1})
+      managerId = await db.findSingleDocument(
+        "group",
+        { _id: new ObjectId(eodData.groupId) },
+        { managedBy: 1 }
+      );
 
-      if(managerId === null){
-
-        return res.send(data)
-      }
-
-      eodData.managedBy = managerId.managedBy.toString()
-      insertEod = await db.insertSingleDocument("eod", eodData)
-
-      if(insertEod){
-        return  res.send({status:1, response: "Successfully inserted"})
+      if (managerId === null) {
+        return res.send(data);
       }
 
-      res.send(data)
+      eodData.managedBy = managerId.managedBy.toString();
+      insertEod = await db.insertSingleDocument("eod", eodData);
 
-    }catch(error){
-      console.log(`Error in user controller - login: ${error.message}`)
-      res.send(error.message)
+      if (insertEod) {
+        return res.send({ status: 1, response: "Successfully inserted" });
+      }
+
+      res.send(data);
+    } catch (error) {
+      console.log(`Error in user controller - login: ${error.message}`);
+      res.send(error.message);
     }
+  };
 
-  }
+  router.getEodsByUserId = async (req, res) => {
+    let data = { status: 0, response: "Invalid Request" },
+      eodPayload = req.body,
+      eods;
 
-  router.getEodsByUserId = async (req,res) => {
-    let data = { status: 0, response: "Invalid Request" }, eodPayload = req.body, eods
-    
-    try{
-      if (Object.keys(eodPayload).length === 0 && eodPayload.data === undefined) {
-        
-        return res.send(data)
+    try {
+      if (
+        Object.keys(eodPayload).length === 0 &&
+        eodPayload.data === undefined
+      ) {
+        return res.send(data);
       }
-      eodPayload = eodPayload.data[0]
-      eods = await db.findDocuments("eod",{createdBy: new ObjectId(eodPayload.id)},{systemInfo: 0, updatedAt: 0})
+      eodPayload = eodPayload.data[0];
+      eods = await db.findDocuments(
+        "eod",
+        { createdBy: new ObjectId(eodPayload.id) },
+        { systemInfo: 0, updatedAt: 0 }
+      );
 
-      return res.send({status:1, data: JSON.stringify(eods)})
-      
-    }catch(error){
-      console.log(`Error in user controller - login: ${error.message}`)
-      res.send(error.message)
+      return res.send({ status: 1, data: JSON.stringify(eods) });
+    } catch (error) {
+      console.log(`Error in user controller - login: ${error.message}`);
+      res.send(error.message);
     }
-  }
+  };
 
-  router.getEodsByManagerId = async (req,res) => {
-    let data = { status: 0, response: "Invalid Request" }, eodPayload = req.body, eods
-    
-    try{
-      if (Object.keys(eodPayload).length === 0 && eodPayload.data === undefined) {
-        
-        return res.send(data)
+  router.getEodsByManagerId = async (req, res) => {
+    let data = { status: 0, response: "Invalid Request" },
+      eodPayload = req.body,
+      eods;
+
+    try {
+      if (
+        Object.keys(eodPayload).length === 0 &&
+        eodPayload.data === undefined
+      ) {
+        return res.send(data);
       }
-      eodPayload = eodPayload.data[0]
-      eods = await db.findDocuments("eod",{managedByBy: new ObjectId(eodPayload.id)},{systemInfo: 0, updatedAt: 0})
-
-      return res.send({status:1, data: JSON.stringify(eods)})
-      
-    }catch(error){
-      console.log(`Error in user controller - login: ${error.message}`)
-      res.send(error.message)
+      eodPayload = eodPayload.data[0];
+      const startDate = new Date(eodPayload.startDate)
+      startDate.setUTCHours(0, 0, 0, 0)
+      const endDate = new Date(eodPayload.endDate)
+      endDate.setUTCHours(23, 59, 59, 999)
+      eods = await db.findDocuments(
+        "eod",
+        {
+          managedBy: new ObjectId(eodPayload.managedBy),
+          createdBy: new ObjectId(eodPayload.createdBy),
+          eodDate: { $gte: startDate, $lte: endDate },
+        },
+        { systemInfo: 0, updatedAt: 0 }
+      );
+      return res.send({ status: 1, data: JSON.stringify(eods) });
+    } catch (error) {
+      console.log(`Error in user controller - login: ${error.message}`);
+      res.send(error.message);
     }
-  }
+  };
 
   return router;
 };
