@@ -199,7 +199,7 @@ module.exports = () => {
       }
       // return res.send(data);
     } catch (error) {
-      logger.error(`Error in user controller - login: ${error.message}`);
+      console.log(`Error in user controller - login: ${error.message}`);
       res.send(error.message);
     }
   };
@@ -529,6 +529,61 @@ module.exports = () => {
   //     return res.send(error.message);
   //   }
   // };
+
+  //Inseert Eod
+
+  router.insertEod = async (req,res) => {
+    let data = { status: 0, response: "Invalid Request" }, eodData = req.body, insertEod, managerId
+    
+    try{
+      if (Object.keys(eodData).length === 0 && eodData.data === undefined) {
+        
+        return res.send(data)
+      }
+      eodData = eodData.data[0]
+      eodData.systemInfo = req.rawHeaders
+
+      managerId = await db.findSingleDocument("group",{_id: new ObjectId(eodData.groupId)}, {managedBy: 1})
+
+      if(managerId === null){
+
+        return res.send(data)
+      }
+
+      eodData.managedBy = managerId.managedBy.toString()
+      insertEod = await db.insertSingleDocument("eod", eodData)
+
+      if(insertEod){
+        return  res.send({status:1, response: "Successfully inserted"})
+      }
+
+      res.send(data)
+
+    }catch(error){
+      console.log(`Error in user controller - login: ${error.message}`)
+      res.send(error.message)
+    }
+
+  }
+
+  router.getEodsByUserId = async (req,res) => {
+    let data = { status: 0, response: "Invalid Request" }, eodPayload = req.body, eods
+    
+    try{
+      if (Object.keys(eodPayload).length === 0 && eodPayload.data === undefined) {
+        
+        return res.send(data)
+      }
+      eodPayload = eodPayload.data[0]
+      eods = await db.findDocuments("eod",{createdBy: new ObjectId(eodPayload.id)},{systemInfo: 0})
+
+      return res.send({status:1, data: eods})
+      
+    }catch(error){
+      console.log(`Error in user controller - login: ${error.message}`)
+      res.send(error.message)
+    }
+  }
 
   return router;
 };
