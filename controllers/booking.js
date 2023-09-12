@@ -3,7 +3,7 @@ const Booking = require('../schema/booking.js')
 const mongoose = require("mongoose")
 const { ObjectId } = require("bson");
 const db = require("../model/mongodb");
-const { scheduleEmail } = require('../model/common.js')
+const { scheduleEmail, scheduleStartAndEnd } = require('../model/common.js')
 module.exports = () => {
     let router = {}
 
@@ -24,13 +24,25 @@ module.exports = () => {
                 },
                 { $unwind: "$TotalBooking" },
                 { $match: { "TotalBooking.status": 1 } },
-                { $project: { _id: 1, roomName: 1, "TotalBooking.status": 1, "TotalBooking.bookedBy": 1, "TotalBooking.sessionDate": 1, "TotalBooking.startsAt": 1, "TotalBooking.endsAt": 1 } },
+                { $project: { _id: 0, "TotalBooking.userBooked":1, "TotalBooking.bookedBy": 1,"TotalBooking.bookedFor": 1, "TotalBooking.sessionDate": 1, "TotalBooking.startsAt": 1, "TotalBooking.endsAt": 1 } },
             ])
-            if (getRoom.length === 0) {
-                return res.send({ status: 0, response: getRoom })
+
+
+            if (getInfo.length === 0) {
+                return res.send({ status: 0, response: getInfo })
             }
             else {
-                return res.send({ status: 1, response: getInfo })
+                let info = getInfo.map((event) => {
+                    let arr = new Object()
+                    arr.userBooked = event.TotalBooking.userBooked    
+                    arr.bookedBy = event.TotalBooking.bookedBy
+                    arr.bookedFor = event.TotalBooking.bookedFor
+                    arr.date = event.TotalBooking.sessionDate
+                    arr.startsAt = event.TotalBooking.startsAt
+                    arr.endsAt = event.TotalBooking.endsAt
+                    return arr
+                })
+                return res.send({ status: 1, response: info })
             }
         } catch (error) {
             return res.send({ status: 0, response: error })
@@ -44,7 +56,17 @@ module.exports = () => {
                 return res.send({ status: 1, response: roomsList })
             }
             else {
-                return res.send({ status: 1, response: roomsList })
+                let info = roomsList.map((event) => {
+                    let arr = new Object()
+                    arr.roomName = event.roomName
+                    arr.roomNo = event.roomNo
+                    arr.preBookings = event.preBookings
+                    arr.status = event.status
+                    arr.activeStatus = event.activeStatus
+                    arr.currentMeeting = event.currentMeeting
+                    return arr
+                })
+                return res.send({ status: 1, response: info })
             }
         } catch (error) {
             return res.send({ status: 0, response: error })
@@ -60,7 +82,6 @@ module.exports = () => {
                 return res.send({ status: 0, response: "starting time and ending time is not valid" })
             }
             checkExist = await Booking.findOne({
-                sessionDate: bookRoom.sessionDate,
                 $and: [{
                     startsAt: {
                         $lte: bookRoom.endsAt
@@ -74,13 +95,16 @@ module.exports = () => {
 
             if (checkExist !== null) {
                 if (checkExist.status === 1 || checkExist.status === 2) {
-                    return res.send({ status: 0, response: `Not available, it slot was booked by ${checkExist.bookedBy} ` })
+                    return res.send({ status: 0, response: `Not available, This slot was already booked by ${checkExist.userBooked} ` })
                 }
             }
 
             getBooking = await db.insertSingleDocument("booking", bookRoom)
+            await db.updateOneDocument("booking", { _id: getBooking._id },
+                { sessionDate: getBooking.startsAt })
             await db.findByIdAndUpdate("room", getBooking.roomId, { $inc: { preBookings: 1 } })
-            // scheduleEmail(getBooking.startsAt, getBooking.email, getBooking.emailcc, getBooking.bookedFor)
+            scheduleEmail(getBooking.startsAt, getBooking.email, getBooking.emailcc, getBooking.bookedFor)
+            scheduleStartAndEnd(getBooking.startsAt, getBooking.endsAt, getBooking._id)
             return res.send({ status: 1, response: "New booking created" })
         } catch (error) {
             return res.send({ status: 0, response: error })
@@ -113,6 +137,7 @@ module.exports = () => {
             return res.send({ status: 0, response: error })
         }
     }
+
 
     router.endMeeting = async (req, res) => {
         try {
@@ -169,12 +194,37 @@ module.exports = () => {
         try {
             let getByDate = req.body, getEvents, totalEvents;
             getByDate = getByDate.data[0];
-            getEvents = await db.findDocuments("booking", { roomId: new ObjectId(getByDate.roomId) ,sessionDate: getByDate.date })
+            getEvents = await db.findDocuments("booking", { roomId: new ObjectId(getByDate.roomId), sessionDate: getByDate.date })
             if (getEvents.length === 0) {
                 return res.send({ status: 1, response: getEvents })
             }
             totalEvents = getEvents.length
-            return res.send({ status: 1, response: { totalEvents: totalEvents, getEvents } })
+            let info = getEvents.map((event) => {
+                let arr = new Object()
+                arr.bookedBy = event.bookedBy
+                arr.bookedFor = event.bookedFor
+                arr.date = event.sessionDate
+                arr.startsAt = event.startsAt
+                arr.endsAt = event.endsAt
+                return arr
+            })
+            return res.send({ status: 1, response: { totalEvents: totalEvents, info } })
+        } catch (error) {
+            return res.send({ status: 0, response: error })
+        }
+    }
+
+
+    router.getMyBookings = async (req, res) => {
+        try {
+            let getMyHistory = req.body, getEvents, totalEvents;
+            getMyHistory = getMyHistory.data[0];
+            getEvents = await db.findDocuments("booking", { bookedBy: new ObjectId(getMyHistory.id) })
+            if (getEvents.length === 0) {
+                return res.send({ status: 1, response: getEvents })
+            }
+            totalEvents = getEvents.length;
+            return res.send({ status: 1, response: { totalEvents, totalHistory: getEvents } })
         } catch (error) {
             return res.send({ status: 0, response: error })
         }

@@ -11,4 +11,5 @@ module.exports = (app) => {
     app.post("/room/endMeeting", booking.endMeeting)
     app.post("/room/cancelMeeting", booking.cancelMeeting)
     app.post("/room/getEvents", booking.getByDate)
+    app.get("/room/getMyBookings",booking.getMyBookings)
 }
