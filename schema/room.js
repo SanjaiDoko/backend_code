@@ -7,7 +7,7 @@ const roomSchema = mongoose.Schema({
         type:String
     },
     roomNo:{
-        type:Number,
+        type:String,
     },
     status:{
         type:Boolean,

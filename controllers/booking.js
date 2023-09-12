@@ -30,7 +30,7 @@ module.exports = () => {
                 return res.send({ status: 0, response: getRoom })
             }
             else {
-                return res.send({ status: 1, response: getRoom })
+                return res.send({ status: 1, response: getInfo })
             }
         } catch (error) {
             return res.send({ status: 0, response: error })
