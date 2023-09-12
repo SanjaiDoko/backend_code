@@ -8,6 +8,7 @@ const { message } = require("../model/message");
 const { ObjectId } = require("bson");
 const { default: mongoose } = require("mongoose");
 const moment = require('moment')
+const jwt = require("jsonwebtoken");
 // const db = require('../model/mongodb')
 
 module.exports = () => {
@@ -607,6 +608,7 @@ module.exports = () => {
       ) {
         return res.send(data);
       }
+
       eodPayload = eodPayload.data[0];
       const startDate = new Date(eodPayload.startDate)
       startDate.setUTCHours(0, 0, 0, 0)
@@ -645,6 +647,18 @@ module.exports = () => {
       eodPayload = eodPayload.data[0];
       if (!mongoose.isValidObjectId(eodPayload.id)) {
         return res.send({ status: 0, response: message.invalidId });
+      }
+
+      let token = req.headers.authorization;
+      token = token.substring(7);
+
+      decodedToken = jwt.decode(token);
+      if (!decodedToken) {
+        return res.status(401).send("Unauthorized");
+      } else {
+        if (decodedToken.userId !== eodPayload.managedBy || decodedToken.userId !== eodPayload.createdBy) {
+          return res.status(401).send("Unauthorized");
+        }
       }
 
       eodData = await db.findDocuments('eod', {_id: new ObjectId(eodPayload.id)}, {systemInfo: 0, updatedAt: 0})

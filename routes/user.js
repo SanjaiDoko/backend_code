@@ -38,13 +38,13 @@ module.exports = (app) => {
 
         // Eod
 
-        app.post('/eod/insertEod', userValidation.insertEod, user.insertEod)
+        app.post('/eod/insertEod', ensureAuthorized, userValidation.insertEod, user.insertEod)
 
-        app.post('/eod/getEodsByUserId', userValidation.checkId, user.getEodsByUserId)
+        app.post('/eod/getEodsByUserId', ensureAuthorized, userValidation.checkId, user.getEodsByUserId)
 
-        app.post('/eod/getEodsByMangerId', user.getEodsByManagerId)
+        app.post('/eod/getEodsByMangerId', ensureAuthorized, user.getEodsByManagerId)
 
-        app.post('/eod/getEodDetailsById', userValidation.checkId, user.getEodDetailsById)
+        app.post('/eod/getEodDetailsById', ensureAuthorized, userValidation.checkId, user.getEodDetailsById)
 
         app.get("/crm",(req,res) => {
 
