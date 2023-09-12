@@ -21,21 +21,6 @@ module.exports = function (app, io) {
     },
   ];
 
-  // validator.checkUserId = [
-  //     check('data').notEmpty().withMessage('Data cannot be empty'),
-  //     check('data.*.userId').notEmpty().withMessage('userId is required field'),
-  //     (req, res, next) => {
-  //         const errors = validationResult(req).array();
-  //         if (errors.length > 0) {
-  //             data.response = errors[0].msg;
-
-  //             return res.send(data);
-  //         }
-
-  //         return next();
-  //     }
-  // ]
-
   validator.registerUser = [
     check("data").notEmpty().withMessage("Data cannot be empty"),
     check("data.*.fullName")
@@ -110,22 +95,6 @@ module.exports = function (app, io) {
     },
   ];
 
-  // validator.checkOtp =
-  //     [
-  //         check('data').notEmpty().withMessage('Data cannot be empty'),
-  //         check('data.*.id').notEmpty().withMessage('id cannot be empty'),
-  //         check('data.*.otp').notEmpty().isNumeric().withMessage('otp cannot be empty & only numeric'),
-  //         (req, res, next) => {
-  //             const errors = validationResult(req).array()
-  //             if (errors.length > 0) {
-
-  //                 return res.send({ status: 0, response: errors[0].msg })
-  //             }
-
-  //             return next()
-  //         }
-  //     ]
-
   validator.forgotPassword = [
     check("data").notEmpty().withMessage("Data cannot be empty"),
     check("data.*.id").notEmpty().withMessage("Id is required field"),
@@ -161,6 +130,27 @@ module.exports = function (app, io) {
     check("data.*.createdById")
       .notEmpty()
       .withMessage("CreatedById cannot be empty"),
+    (req, res, next) => {
+      const errors = validationResult(req).array();
+      if (errors.length > 0) {
+        data.response = errors[0].msg;
+
+        return res.send(data);
+      }
+
+      return next();
+    },
+  ];
+
+  validator.insertEod = [
+    check("data").notEmpty().withMessage("Data cannot be empty"),
+    check("data.*.groupId").notEmpty().withMessage("Group Id cannot be empty"),
+    check("data.*.createdBy")
+      .notEmpty()
+      .withMessage("CreatedBy cannot be empty"),
+      check("data.*.eodDate").trim().notEmpty().withMessage("EodDate Id cannot be empty"),
+      check("data.*.eodSummary").isArray().withMessage("EodSummary must be array"),
+      check("data.*.ccMail").isArray().withMessage("CCMail must be array"),
     (req, res, next) => {
       const errors = validationResult(req).array();
       if (errors.length > 0) {

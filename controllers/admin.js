@@ -1,44 +1,45 @@
-const { default: mongoose } = require("mongoose")
-const common = require("../model/common")
-const { message } = require("../model/message")
-const db = require("../model/mongodb")
-const { ObjectId } = require("bson")
-const bcrypt = require("bcrypt")
+const { default: mongoose } = require("mongoose");
+const common = require("../model/common");
+const Room = require("../schema/room.js");
+const { message } = require("../model/message");
+const db = require("../model/mongodb");
+const { ObjectId } = require("bson");
+const bcrypt = require("bcrypt");
 
 module.exports = () => {
   let router = {};
 
-  router.adminRegistration = async(req,res) => {
+  router.adminRegistration = async (req, res) => {
     let data = { status: 0, response: "Invalid request" },
-    adminData = req.body,
-    checkEmail,
-    insertUser;
+      adminData = req.body,
+      checkEmail,
+      insertUser;
 
-  try {
-    if (Object.keys(adminData).length === 0 && adminData.data === undefined) {
-      res.send(data);
+    try {
+      if (Object.keys(adminData).length === 0 && adminData.data === undefined) {
+        res.send(data);
 
-      return;
+        return;
+      }
+      adminData = adminData.data[0];
+      adminData.systemInfo = req.rawHeaders;
+      adminData.password = bcrypt.hashSync(adminData.password, 10);
+      checkEmail = await db.findOneDocumentExists("internal", {
+        email: adminData.email,
+      });
+      if (checkEmail === true) {
+        return res.send({ status: 0, response: "Email already exists" });
+      }
+      insertUser = await db.insertSingleDocument("internal", adminData);
+      return res.send({
+        status: 1,
+        data: insertUser._id,
+        response: "Registration successfully completed",
+      });
+    } catch (error) {
+      return res.send(error.message);
     }
-    adminData = adminData.data[0];
-    adminData.systemInfo = req.rawHeaders;
-    adminData.password = bcrypt.hashSync(adminData.password, 10);
-    checkEmail = await db.findOneDocumentExists("internal", {
-      email: adminData.email,
-    });
-    if (checkEmail === true) {
-      return res.send({ status: 0, response: "Email already exists" });
-    }
-    insertUser = await db.insertSingleDocument("internal", adminData);
-    return res.send({
-      status: 1,
-      data: insertUser._id,
-      response: "Registration successfully completed",
-    });
-  } catch (error) {
-    return res.send(error.message);
-  }
-  }
+  };
 
   router.getAllUsers = async (req, res) => {
     let data = { status: 0, response: message.inValid },
@@ -55,7 +56,7 @@ module.exports = () => {
           email: 1,
           createdAt: 1,
           status: 1,
-          groupId:1
+          groupId: 1,
         }
       );
       if (usersData) {
@@ -73,74 +74,88 @@ module.exports = () => {
   //get User By Id
   router.getUserById = async (req, res) => {
     let data = { status: 0, response: message.inValid },
-      userId, userData;
+      userId,
+      userData;
 
-      try {
-        userId = req.body
-        if (Object.keys(userId).length === 0 && userId.data === undefined) {
-          res.send(data)
-  
-          return
-        }
-        userId = userId.data[0]
-        if (!mongoose.isValidObjectId(userId.id)) {
-  
-          return res.send({ status: 0, response: message.invalidUserId })
-        }
-        userData = await db.findSingleDocument("user", { _id: new ObjectId(userId.id) },{_id:1, fullName:1})
+    try {
+      userId = req.body;
+      if (Object.keys(userId).length === 0 && userId.data === undefined) {
+        res.send(data);
+
+        return;
+      }
+      userId = userId.data[0];
+      if (!mongoose.isValidObjectId(userId.id)) {
+        return res.send({ status: 0, response: message.invalidUserId });
+      }
+      userData = await db.findSingleDocument(
+        "user",
+        { _id: new ObjectId(userId.id) },
+        { _id: 1, fullName: 1 }
+      );
       if (userData !== null && Object.keys(userData).length !== 0) {
+        return res.send({ status: 1, data: userData });
+      }
 
-        return res.send({ status: 1, data: userData })
-      }
-  
-        return res.send(data)
-      } catch (error) {
-        // logger.error(`Error in user controller - getUserEmailbyId: ${error.message}`)
-        res.send(error.message)
-      }
+      return res.send(data);
+    } catch (error) {
+      // logger.error(`Error in user controller - getUserEmailbyId: ${error.message}`)
+      res.send(error.message);
+    }
   };
 
   //get all Groupa
   router.getAllGroups = async (req, res) => {
     let data = { status: 0, response: message.inValid },
       groupData;
-      groupDataArray = []
+    groupDataArray = [];
 
     try {
       groupData = await db.findAndSelect(
         "group",
-        { status: { $in: [1,2] } },
+        { status: { $in: [1, 2] } },
         { _id: 1, name: 1, managedBy: 1, users: 1, status: 1 }
       );
 
-      const countTicket = (data, status)=>{
-         return data.filter(doc=> doc.status === status).length
-      }
+      const countTicket = (data, status) => {
+        return data.filter((doc) => doc.status === status).length;
+      };
 
       for (let i = 0; i < groupData.length; i++) {
-        let singleGroupData = {}
-        singleGroupData.groupId = `${groupData[i]._doc._id}`
-        singleGroupData.name = `${groupData[i]._doc.name}`
-        singleGroupData.status = `${groupData[i]._doc.status}`
+        let singleGroupData = {};
+        singleGroupData.groupId = `${groupData[i]._doc._id}`;
+        singleGroupData.name = `${groupData[i]._doc.name}`;
+        singleGroupData.status = `${groupData[i]._doc.status}`;
 
-        let data = await db.findDocuments("user", { groupId: new ObjectId(groupData[i]._doc._id) },{_id:1, fullName:1,role:1})
+        let data = await db.findDocuments(
+          "user",
+          { groupId: new ObjectId(groupData[i]._doc._id) },
+          { _id: 1, fullName: 1, role: 1 }
+        );
 
         //ticket Data
-        let ticketData = await db.findDocuments("ticket", { issueGroup: new ObjectId(groupData[i]._doc._id) },{status:1})
+        let ticketData = await db.findDocuments(
+          "ticket",
+          { issueGroup: new ObjectId(groupData[i]._doc._id) },
+          { status: 1 }
+        );
 
-        singleGroupData.openTicket = countTicket(ticketData,0)
-        singleGroupData.inProgressTicket = countTicket(ticketData,2)
-        singleGroupData.completedTicket = countTicket(ticketData,1)
-        singleGroupData.rejectedTicket = countTicket(ticketData,3)
-        singleGroupData.totalTicket = ticketData.length
+        singleGroupData.openTicket = countTicket(ticketData, 0);
+        singleGroupData.inProgressTicket = countTicket(ticketData, 2);
+        singleGroupData.completedTicket = countTicket(ticketData, 1);
+        singleGroupData.rejectedTicket = countTicket(ticketData, 3);
+        singleGroupData.totalTicket = ticketData.length;
         // Filter documents with role 3 = managedBy
-        const managedBy = data.filter(doc => doc.role === 3);
-        singleGroupData.managedBy = {name:managedBy[0]?.fullName, managedBy:managedBy[0]?._id}
-        
+        const managedBy = data.filter((doc) => doc.role === 3);
+        singleGroupData.managedBy = {
+          name: managedBy[0]?.fullName,
+          managedBy: managedBy[0]?._id,
+        };
+
         // Filter documents with role 1
-        const users = data.filter(doc => doc.role === 1);
-        singleGroupData.users = users
-        groupDataArray = [...groupDataArray, singleGroupData]
+        const users = data.filter((doc) => doc.role === 1);
+        singleGroupData.users = users;
+        groupDataArray = [...groupDataArray, singleGroupData];
       }
 
       if (groupDataArray) {
@@ -225,11 +240,13 @@ module.exports = () => {
 
   //Update Group
   router.updateGroup = async (req, res) => {
-    let data = { status: 0, response: message.inValid },users, updateUser,updateGroup
+    let data = { status: 0, response: message.inValid },
+      users,
+      updateUser,
+      updateGroup;
 
     try {
-      let groupData = req.body
-        
+      let groupData = req.body;
 
       if (Object.keys(groupData).length === 0 && groupData.data === undefined) {
         res.send(data);
@@ -238,7 +255,7 @@ module.exports = () => {
       }
       groupData = groupData.data[0];
 
-      users = groupData.users
+      users = groupData.users;
       // if (!mongoose.isValidObjectId(groupData.createdBy)) {
 
       //   return res.send({ status: 0, response: message.invalidUserId })
@@ -261,9 +278,7 @@ module.exports = () => {
           { _id: new ObjectId(users[i]) },
           { groupId: groupData.id }
         );
-      }   
-
-
+      }
 
       if (updateGroup) {
         // event.eventEmitterInsert.emit(
@@ -350,19 +365,22 @@ module.exports = () => {
       userData;
 
     try {
-      groupId = req.body
+      groupId = req.body;
       if (Object.keys(groupId).length === 0 && groupId.data === undefined) {
-        res.send(data)
+        res.send(data);
 
-        return
+        return;
       }
-      groupId = groupId.data[0]
+      groupId = groupId.data[0];
       if (!mongoose.isValidObjectId(groupId.id)) {
-
-        return res.send({ status: 0, response: message.invalidUserId })
+        return res.send({ status: 0, response: message.invalidUserId });
       }
 
-       userData = await db.findDocuments("user", { groupId: new ObjectId(groupId) },{_id:1, fullName:1,role:1,groupId:1})
+      userData = await db.findDocuments(
+        "user",
+        { groupId: new ObjectId(groupId) },
+        { _id: 1, fullName: 1, role: 1, groupId: 1 }
+      );
 
       // if (groupData) {
       //   return res.send({ status: 1, data: JSON.stringify(groupData) });
@@ -408,6 +426,70 @@ module.exports = () => {
       });
     } catch (error) {
       return res.send(error.message);
+    }
+  };
+
+  // roomBookingController
+  router.createRoom = async (req, res) => {
+    try {
+      let { roomName, roomNo } = req.body,
+        checkExist;
+      checkExist = await Room.findOne({ roomNo: roomNo });
+      if (checkExist) {
+        return res.send({
+          status: 0,
+          response: "Room with same number already exist",
+        });
+      }
+      await Room.create({ roomName, roomNo });
+      return res.send({ status: 1, response: "Room created" });
+    } catch (error) {
+      return res.send({ status: 0, response: error });
+    }
+  };
+
+  router.updateRoom = async (req, res) => {
+    try {
+      let { id, roomName, roomNo } = req.body,
+        getRoom;
+      getRoom = await Room.findById({ _id: id });
+      if (!getRoom) {
+        return res.send({ status: 0, response: "No room found" });
+      } else {
+        await Room.updateOne(
+          { _id: id },
+          { roomName: roomName, roomNo, roomNo }
+        );
+        return res.send({ status: 1, response: "Room updated" });
+      }
+    } catch (error) {
+      return res.send({ status: 0, response: error });
+    }
+  };
+
+  router.deleteRoom = async (req, res) => {
+    try {
+      let { id } = req.body,
+        getRoom;
+      getRoom = await Room.findById({ _id: id });
+      if (!getRoom) {
+        return res.send({ status: 0, response: "No room found" });
+      } else {
+        if (getRoom.activeStatus === true) {
+          await Room.findByIdAndUpdate(
+            { _id: getRoom._id },
+            { activeStatus: false }
+          );
+          return res.send({ status: 1, response: "Room updated" });
+        }
+        await Room.findByIdAndUpdate(
+          { _id: getRoom._id },
+          { activeStatus: true }
+        );
+        return res.send({ status: 1, response: "Room updated" });
+      }
+    } catch (error) {
+      return res.send({ status: 0, response: error });
     }
   };
 

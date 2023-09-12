@@ -16,9 +16,14 @@ const fsRead = require("fs");
 // const { transporter } = require('./mail')
 // const imagePath = path.join(__dirname, "/../public/assets", "allmastersbanner.png");
 // let mailResendAttempts = 2
-
+const booking = require("../schema/booking.js")
+const notifier = require('node-notifier');
+const { default: mongoose } = require("mongoose");
+const { transporter } = require("./mail");
 //convert the reading file to base64
-
+const moment = require("moment")
+const cron = require("node-cron")
+const ejs = require("ejs")
 function getImageAsBase64(imagePath) {
   const imageBuffer = fsRead.readFileSync(imagePath);
   const imageBase64 = imageBuffer.toString("base64");
@@ -52,6 +57,7 @@ const forgotPasswordMail = async (mailData) => {
         };
 
         //Send Mail
+
         transporter.sendMail(mailOptions, (error, info) => {
           if (error) {
             if (mailResendAttempts !== 0) {
@@ -523,7 +529,7 @@ const loginParameter = async (model, loginData, res, req) => {
       //     //   return res.send({ status: 0, response: message.loginExceeded })
       //     // }
       //   }
-        // else{
+      // else{
 
       //     return res.send({ status: 0, response: message.wrongPassword });
       //   }
@@ -622,13 +628,84 @@ const checkAccess = function (role) {
 };
 
 
-const createDir = async(folderPath) => {
-      await fs.mkdir(folderPath);
+const createDir = async (folderPath) => {
+  await fs.mkdir(folderPath);
 }
 
-const createFile =async (buffer, path, encodeType) => {
-     await fs.writeFile(buffer, path, encodeType)
+const createFile = async (buffer, path, encodeType) => {
+  await fs.writeFile(buffer, path, encodeType)
 }
+
+// to send booking notification
+
+// const getUser = async (req, res) => {
+//   try {
+//     let authHead, token;
+//     authHead = req.headers.authorization
+//     if (authHead && authHead.startsWith('Bearer')) {
+//       token = authHead.split(" ")[1]
+//       jwt.decode(token)
+//       return token
+//     }
+//     else {
+//       return res.send({ status: 0, response: "Something went wrong" })
+//     }
+//   } catch (error) {
+//     return res.send({ status: 0, response: error })
+//   }
+// }
+
+const sendEmail = (creator, teamMates, reason, timing) => {
+  let paths = path.join(__dirname, '../templates/user/reminder.ejs')
+  ejs.renderFile(paths, { reason: reason, timing: timing }, (err, data) => {
+    if (err) {
+      console.log(err);
+    }
+    else {
+      const mailOptions = {
+        from: process.env.SMTP_USER,
+        to: creator,
+        cc: teamMates,
+        subject: "Meeting Alert",
+        html: data
+      };
+
+      transporter.sendMail(mailOptions, (error, info) => {
+        if (error) {
+          console.error('Error sending email:', error);
+        } else {
+          console.log('Email sent:', info.response);
+        }
+      });
+    }
+  })
+
+};
+
+const scheduleEmail = (eventStartTime, emailTo, emailCC, reason) => {
+  try {
+    let data, dateInfo, month, dayInWeek, hours, minutes, convert, cronExpression, timing;
+    timing = moment(eventStartTime).format('LT');
+    convert = eventStartTime.getTime() - 10 * 60 * 1000;
+    data = moment(convert).utc().format("LLLL'");
+    dateInfo = data.split(" ")
+    month = dateInfo[2].slice(0, 2);
+    dayInWeek = dateInfo[0].split(",")[0]
+    hours = moment(convert).hours()
+    minutes = moment(convert).minutes()
+    cronExpression = `${minutes} ${hours} ${month} ${dateInfo[1]} ${dayInWeek}`;
+    console.log(cronExpression);
+    cron.schedule(cronExpression, () => {
+      sendEmail(emailTo, emailCC, reason, timing);
+      console.log('Email scheduled 10 minutes before the event.');
+    });
+  } catch (error) {
+    console.log(error);
+  }
+
+};
+
+
 
 module.exports = {
   uploadFileAzure,
@@ -649,4 +726,5 @@ module.exports = {
   checkAccess,
   deleteFilesInFolder,
   getImageAsBase64,
+  scheduleEmail
 };

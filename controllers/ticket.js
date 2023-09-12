@@ -145,7 +145,7 @@ module.exports = () => {
       fileFolderPath,
       ticketDocsData,
       store = [],
-      groupName;
+      groupName,  fileToDb;
 
     try {
       if (

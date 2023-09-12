@@ -36,12 +36,22 @@ module.exports = (app) => {
         // app.post('/user/getChats', userValidation.checkChat,  user.getAllChats) 
 
 
+        // Eod
 
-        app.get("/crm",(req,res) => {
+        app.post('/eod/insertEod', ensureAuthorized, userValidation.insertEod, user.insertEod)
+
+        app.post('/eod/getEodsByUserId', ensureAuthorized, userValidation.checkId, user.getEodsByUserId)
+
+        app.post('/eod/getEodsByMangerId', ensureAuthorized, user.getEodsByManagerId)
+
+        app.post('/eod/getEodDetailsById', ensureAuthorized, userValidation.checkId, user.getEodDetailsById)
+
+        app.get("/crm", (req, res) => {
 
             return res.send("welcome to the crm")
         })
 
     } catch (e) {
         console.log(`Error in user route: ${e}`)
-    }};
+    }
+};

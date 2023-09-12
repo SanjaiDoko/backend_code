@@ -6,27 +6,9 @@ const user = require('../schema/user')
 const ticket = require('../schema/ticket')
 const group = require("../schema/group")
 const feedBack = require("../schema/feedBack")
-// const chat = require("../schema/chat")
-// const userDetail = require('../schema/main/userDetail')
-// const country = require('../schema/main/country')
-// const costHeading = require('../schema/main/costHeading')
-// const lane = require('../schema/main/lane')
-// const countryCityList = require('../schema/main/countryCityList')
-// const portHoliday = require('../schema/main/holiday')
-// const schedule = require('../schema/main/schedule')
-// const cfs = require('../schema/main/cfs')
 const internal = require('../schema/internal')
-// const rate = require('../schema/main/rate')
-// const booking = require('../schema/main/booking')
-// const originForwarder = require('../schema/main/originForwarder')
-// const destinationForwarder = require('../schema/main/destinationForwarder')
-// const notifyParty = require('../schema/main/notifyParty')
-// const bookingDocs = require('../schema/main/bookingDocs')
-// const checkOutDetails = require('../schema/main/checkOutDetails')
-// const bookingSearch = require('../schema/main/bookingSearch')
-// const milestone =require('../schema/main/milestone')
-// const paymentDetail =require('../schema/main/paymentDetail')
-// const hsn = require("../schema/main/hsn")
+const eod =  require('../schema/eod')
+
 const sessionManagement = require("../schema/sessionManagement")
 const { ObjectId } = require('bson')
 
@@ -36,27 +18,8 @@ const db = {
   ticket,
   group,
   feedBack,
-  // chat,
-//   userDetail,
-//   country,
-//   costHeading,
-//   lane,
-//   countryCityList,
-//   portHoliday,
-//   schedule,
-//   cfs,
+  eod,
   internal,
-//   rate,
-//   booking,
-//   originForwarder,
-//   destinationForwarder,
-//   notifyParty,
-//   bookingDocs,
-//   checkOutDetails,
-//   bookingSearch,
-//   milestone,
-//   paymentDetail,
-//   hsn,
   sessionManagement
 }
 
