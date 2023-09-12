@@ -24,13 +24,15 @@ module.exports = (app) => {
 
         app.post('/user/logout', userValidation.checkId, user.logout)
 
-        app.post('/user/updateStatus',  user.updatedUserStatusById) 
+        app.post('/user/updateStatus', user.updatedUserStatusById)
+       
 
-        app.get("/crm",(req,res) => {
+        app.get("/crm", (req, res) => {
 
             return res.send("welcome to the crm")
         })
 
     } catch (e) {
         console.log(`Error in user route: ${e}`)
-    }};
+    }
+};

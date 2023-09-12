@@ -15,7 +15,7 @@ module.exports = () => {
   router.createTicket = async (req, res) => {
     let data = { status: 0, response: message.inValid },
       ticketData = req.body,
-      insertTicket, filePath, folderPath, i = 0, arr = []
+      insertTicket, filePath, folderPath, i = 0, arr = [],fileToDb;
 
     try {
       if (Object.keys(ticketData).length === 0 && ticketData.data === undefined) {
@@ -41,8 +41,10 @@ module.exports = () => {
           common.createDir(folderPath)
           for (; i < ticketData.files.length; i++) {
             filePath = `${folderPath}/${ticketData.files[i].fileName}`
+            fileToDb = `/fileUploads${insertTicket._id}/${ticketData.files[i].fileName}`
             common.createFile(filePath, ticketData.files[i].fileData.split(',')[1], "base64")
-            arr.push(filePath)
+            console.log(filePath.split("/")[1])
+            arr.push(fileToDb)
           }
           await db.findByIdAndUpdate("ticket", insertTicket._id, { files: arr })
         }
