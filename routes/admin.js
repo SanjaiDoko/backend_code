@@ -28,9 +28,9 @@ module.exports = (app) => {
     // app.post("/admin/register", admin.registration)
 
     //roomApi's
-    app.post("/deleteRoom", admin.deleteRoom)
-    app.post("/createRoom", admin.createRoom)
-    app.post("/updateRoom", admin.updateRoom)
+    app.post("/room/deleteRoom", admin.deleteRoom)
+    app.post("/room/createRoom", admin.createRoom)
+    app.post("/room/updateRoom", admin.updateRoom)
   } catch (error) {
     console.log(error.message);
   }

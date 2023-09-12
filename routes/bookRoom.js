@@ -4,11 +4,11 @@ module.exports = (app) => {
 
     const booking = require("../controllers/booking.js")()
 
-    app.get("/getAllRooms", booking.getAllRooms)
-    app.get("/getRoomById", booking.getRoom)
-    app.post("/bookRoom", booking.bookRoom)
-    app.post("/startMeet", booking.startMeeting)
-    app.post("/endMeeting", booking.endMeeting)
-    app.post("/cancelMeeting", booking.cancelMeeting)
-    app.post("/getEvents", booking.getByDate)
+    app.get("/room/getAllRooms", booking.getAllRooms)
+    app.get("/room/getRoomById", booking.getRoom)
+    app.post("/room/bookRoom", booking.bookRoom)
+    app.post("/room/startMeet", booking.startMeeting)
+    app.post("/room/endMeeting", booking.endMeeting)
+    app.post("/room/cancelMeeting", booking.cancelMeeting)
+    app.post("/room/getEvents", booking.getByDate)
 }
