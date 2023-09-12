@@ -68,6 +68,7 @@ mongoose.connection.on("connected", () => {
     require("./routes/admin")(app);
     require("./routes/user")(app);
     require("./routes/ticket")(app)
+    require("./routes/bookRoom")(app)
     /** HTTP Server Instance */
     try {
         server.listen(process.env.PORT, () => {

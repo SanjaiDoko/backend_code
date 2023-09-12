@@ -46,11 +46,12 @@ module.exports = (app) => {
 
         app.post('/eod/getEodDetailsById', ensureAuthorized, userValidation.checkId, user.getEodDetailsById)
 
-        app.get("/crm",(req,res) => {
+        app.get("/crm", (req, res) => {
 
             return res.send("welcome to the crm")
         })
 
     } catch (e) {
         console.log(`Error in user route: ${e}`)
-    }};
+    }
+};
