@@ -7,6 +7,9 @@ const { message } = require("../model/message");
 const { ObjectId } = require("bson");
 const { default: mongoose } = require("mongoose");
 const moment = require("moment");
+const jwt = require("jsonwebtoken");
+
+const  fs  = require("fs");
 
 module.exports = () => {
   let router = {},
@@ -142,7 +145,7 @@ module.exports = () => {
       fileFolderPath,
       ticketDocsData,
       store = [],
-      groupName;
+      groupName,  fileToDb;
 
     try {
       if (
@@ -212,8 +215,8 @@ module.exports = () => {
             fileName = filePath.split("/")[1];
 
             filePath = {
-              fileName: fileName,
-              filePath: `fileUploads/${fileFolderPath}`,
+              fileName: ticketData.files[i].fileName,
+              filePath: `fileUploads/${insertTicket._id}/${ticketData.files[i].fileName}`,
             };
             arr.push(filePath);
           }
@@ -272,6 +275,7 @@ module.exports = () => {
         { _id: new ObjectId(ticketData.assignedTo) },
         { email: 1, fullName: 1 }
       );
+
 
       if (!existingTicket) {
         return res.send({ status: 0, response: "Invalid ticket id" });
@@ -348,6 +352,206 @@ module.exports = () => {
     }
   };
 
+  router.managerUpdateTicket = async (req, res) => {
+    let data = { status: 0, response: message.inValid },
+      ticketData = req.body,
+      updateTicket,
+      assignedNameData,
+      existingTicket, decodedToken
+
+    try {
+      if (
+        Object.keys(ticketData).length === 0 &&
+        ticketData.data === undefined
+      ) {
+        res.send(data);
+
+        return;
+      }
+      ticketData = ticketData.data[0];
+
+      if (!mongoose.isValidObjectId(ticketData.id)) {
+        return res.send({ status: 0, response: message.invalidId });
+      }
+
+      existingTicket = await db.findSingleDocument("ticket", {
+        _id: new ObjectId(ticketData.id),
+      });
+
+      let token = req.headers.authorization;
+      token = token.substring(7);
+
+      assignedNameData = await db.findSingleDocument(
+        "user",
+        { _id: new ObjectId(ticketData.assignedTo) },
+        { email: 1, fullName: 1 }
+      );
+
+      decodedToken = jwt.decode(token);
+      if (!decodedToken) {
+        return res.status(401).send("Unauthorized");
+      } else {
+        if (decodedToken.userId !== existingTicket.managedBy.toString()) {
+          return res.status(401).send("Unauthorized");
+        }
+      }
+
+      if (!existingTicket) {
+        return res.send({ status: 0, response: "Invalid ticket id" });
+      }
+
+      if (ticketData.endTime) {
+        ticketData.endTime = moment(ticketData.endTime, "DD-MM-YYYYTHH:mm:ss");
+      }
+
+      if (existingTicket.assignedMail === 0) {
+        ticketData.startTime = moment().format("MM-DD-YYYY");
+        await ticketSendMail({
+          emailTo: assignedNameData.email,
+          fullName: assignedNameData.fullName,
+          mail: ticketData.mailList,
+          url: process.env.UIURL + "/user/dashboard/" + ticketData.id,
+        });
+        ticketData.status = 2;
+        ticketData.assignedMail = 1;
+      }
+
+      updateTicket = await db.findOneAndUpdate(
+        "ticket",
+        { _id: new ObjectId(ticketData.id), status: { $in: [1, 2, 0, 3] } },
+        {
+          endTime: ticketData.endTime,
+          assignedTo: ticketData.assignedTo,
+          status: ticketData.status,
+          assignedMail: ticketData.assignedMail
+        }
+      );
+
+      if (updateTicket.modifiedCount !== 0 && updateTicket.matchedCount !== 0) {
+        return res.send({ status: 1, response: message.updatedSucess });
+      } else {
+        return res.send({ status: 1, response: message.notFoundCountry });
+      }
+    } catch (error) {
+      console.log(
+        `Error in ticket controller - updateTicket: ${error.message}`
+      );
+      data.response = error.message;
+      res.send(data);
+    }
+  };
+
+  router.assignedUpdateTicket = async (req, res) => {
+    let data = { status: 0, response: message.inValid },
+      ticketData = req.body,
+      updateTicket,
+      assignedNameData,
+      existingTicket,
+      managerData,
+      ticketCreator,
+      token,
+      decodedToken;
+
+    try {
+      if (
+        Object.keys(ticketData).length === 0 &&
+        ticketData.data === undefined
+      ) {
+        res.send(data);
+
+        return;
+      }
+      ticketData = ticketData.data[0];
+
+      if (!mongoose.isValidObjectId(ticketData.id)) {
+        return res.send({ status: 0, response: message.invalidId });
+      }
+
+      existingTicket = await db.findSingleDocument("ticket", {
+        _id: new ObjectId(ticketData.id),
+      });
+
+      token = req.headers.authorization;
+      token = token.substring(7);
+
+      decodedToken = jwt.decode(token);
+      if (!decodedToken) {
+        return res.status(401).send("Unauthorized");
+      } else {
+        if (decodedToken.userId !== existingTicket.assignedTo.toString()) {
+          return res.status(401).send("Unauthorized");
+        }
+      }
+
+      if (!existingTicket) {
+        return res.send({ status: 0, response: "Invalid ticket id" });
+      }
+
+      if (ticketData.actualEndTime) {
+        ticketData.actualEndTime = moment(ticketData.actualEndTime);
+      }
+
+      managerData = await db.findSingleDocument(
+        "user",
+        { _id: new ObjectId(existingTicket.managedBy) },
+        { email: 1, fullName: 1 }
+      );
+
+      assignedNameData = await db.findSingleDocument(
+        "user",
+        { _id: new ObjectId(existingTicket.assignedTo) },
+        { email: 1, fullName: 1 }
+      );
+
+      ticketCreator = await db.findSingleDocument(
+        "user",
+        { _id: new ObjectId(existingTicket.createdBy) },
+        { email: 1, fullName: 1 }
+      );
+      let mailArray = [
+        ...existingTicket.mailList,
+        assignedNameData.email,
+        managerData.email,
+      ];
+      await feedBackTicketMail({
+        emailTo: ticketCreator.email,
+        fullName: ticketCreator.fullName,
+        url: process.env.UIURL + "/user/dashboard/" + ticketData.id,
+      });
+
+      await completeTicketMail({
+        emailTo: ticketCreator.email,
+        fullName: ticketCreator.fullName,
+        mail: mailArray,
+        url: process.env.UIURL + "/user/editticket/" + ticketData.id,
+      });
+
+      updateTicket = await db.findOneAndUpdate(
+        "ticket",
+        { _id: new ObjectId(ticketData.id), status: { $in: [1, 2, 0, 3] } },
+        {
+          actualEndTime: ticketData.actualEndTime,
+          timeLog: ticketData.timeLog,
+          problem: ticketData.problem,
+          resolution: ticketData.resolution,
+          status: ticketData.status
+        }
+      );
+
+      if (updateTicket.modifiedCount !== 0 && updateTicket.matchedCount !== 0) {
+        return res.send({ status: 1, response: message.updatedSucess });
+      } else {
+        return res.send({ status: 1, response: message.notFoundCountry });
+      }
+    } catch (error) {
+      console.log(
+        `Error in ticket controller - updateTicket: ${error.message}`
+      );
+      data.response = error.message;
+      res.send(data);
+    }
+  };
+
   router.getTicketById = async (req, res) => {
     let data = { status: 0, response: message.inValid },
       ticketData = req.body,
@@ -366,6 +570,23 @@ module.exports = () => {
       if (!mongoose.isValidObjectId(ticketData.id)) {
         return res.send({ status: 0, response: message.invalidId });
       }
+
+      existingTicket = await db.findSingleDocument("ticket", {
+        _id: new ObjectId(ticketData.id),
+      });
+
+      // let token = req.headers.authorization;
+      // token = token.substring(7);
+
+      // let decodedToken = jwt.decode(token);
+      // if(!decodedToken){
+      //   return res.status(401).send("Unauthorized");
+      // }else{
+      //   if(existingTicket.assignedTo.toString() !== decodedToken.userId){
+      //     return res.status(401).send("Unauthorized");
+      //   }
+      // }
+
       condition = {
         _id: new ObjectId(ticketData.id),
         status: { $in: [1, 2, 0, 3] },
@@ -441,6 +662,15 @@ module.exports = () => {
       ticketsData = await db.getAggregation("ticket", aggregationQuery);
 
       if (ticketsData) {
+        if(ticketsData[0].files.length > 0){
+          ticketsData[0].files = ticketsData[0].files.map((fileData) => {
+            const dirPath = path.resolve(`./${fileData.filePath}`)
+            return {
+              ...fileData,
+              filePath:`data:application/pdf;base64,${fs.readFileSync(dirPath,{encoding:"base64"})}`
+            }
+          })
+        }
         return res.send({ status: 1, data: JSON.stringify(ticketsData) });
       }
     } catch (error) {
@@ -470,6 +700,7 @@ module.exports = () => {
       if (!mongoose.isValidObjectId(ticketData.id)) {
         return res.send({ status: 0, response: message.invalidId });
       }
+
       condition = {
         createdBy: new ObjectId(ticketData.id),
         status: { $in: [1, 2, 0, 3] },
@@ -535,7 +766,7 @@ module.exports = () => {
             files: 1,
             timeLog: 1,
             status: 1,
-            ticketId: 1
+            ticketId: 1,
           },
         },
       ];
@@ -626,7 +857,7 @@ module.exports = () => {
             files: 1,
             endTime: 1,
             timeLog: 1,
-            ticketId: 1
+            ticketId: 1,
           },
         },
       ];
@@ -728,7 +959,7 @@ module.exports = () => {
             endTime: 1,
             timeLog: 1,
             issueGroupName: "$groupdetails.name",
-            ticketId: 1
+            ticketId: 1,
           },
         },
       ];

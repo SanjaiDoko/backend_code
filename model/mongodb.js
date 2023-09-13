@@ -16,17 +16,8 @@ const chat = require("../schema/chat")
 // const schedule = require('../schema/main/schedule')
 // const cfs = require('../schema/main/cfs')
 const internal = require('../schema/internal')
-// const rate = require('../schema/main/rate')
-// const booking = require('../schema/main/booking')
-// const originForwarder = require('../schema/main/originForwarder')
-// const destinationForwarder = require('../schema/main/destinationForwarder')
-// const notifyParty = require('../schema/main/notifyParty')
-// const bookingDocs = require('../schema/main/bookingDocs')
-// const checkOutDetails = require('../schema/main/checkOutDetails')
-// const bookingSearch = require('../schema/main/bookingSearch')
-// const milestone =require('../schema/main/milestone')
-// const paymentDetail =require('../schema/main/paymentDetail')
-// const hsn = require("../schema/main/hsn")
+const eod =  require('../schema/eod')
+
 const sessionManagement = require("../schema/sessionManagement")
 const { ObjectId } = require('bson')
 
@@ -36,6 +27,7 @@ const db = {
   ticket,
   group,
   feedBack,
+  eod,
   chat,
 //   userDetail,
 //   country,
@@ -46,17 +38,6 @@ const db = {
 //   schedule,
 //   cfs,
   internal,
-//   rate,
-//   booking,
-//   originForwarder,
-//   destinationForwarder,
-//   notifyParty,
-//   bookingDocs,
-//   checkOutDetails,
-//   bookingSearch,
-//   milestone,
-//   paymentDetail,
-//   hsn,
   sessionManagement
 }
 

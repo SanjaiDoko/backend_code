@@ -2,7 +2,7 @@ let mongoose = require("mongoose");
 const ObjectId = mongoose.Schema.Types.ObjectId
 
 //User Schema
-let userSchema = mongoose.Schema({
+let ticketSchema = mongoose.Schema({
     ticketId: {
        type: String,
        unique: true,
@@ -79,5 +79,5 @@ let userSchema = mongoose.Schema({
     },
 }, { timestamps: true, versionKey: false });
 
-module.exports = mongoose.model("ticket", userSchema);
+module.exports = mongoose.model("ticket", ticketSchema);
 

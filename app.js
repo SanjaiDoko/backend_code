@@ -139,21 +139,17 @@ mongoose.connection.on("connected", () => {
     )
   );
 
-  require("./routes/admin")(app);
-  require("./routes/user")(app);
-  require("./routes/ticket")(app);
-  /** HTTP Server Instance */
-  try {
-    server.listen(process.env.PORT, () => {
-      console.log(
-        "Server turned on with",
-        process.env.ENV,
-        "mode on port",
-        process.env.PORT
-      );
-    });
-  } catch (ex) {
-    console.log("TCL: ex", ex);
-  }
-  /** /HTTP Server Instance */
+    require("./routes/admin")(app);
+    require("./routes/user")(app);
+    require("./routes/ticket")(app)
+    require("./routes/bookRoom")(app)
+    /** HTTP Server Instance */
+    try {
+        server.listen(process.env.PORT, () => {
+            console.log("Server turned on with", process.env.ENV, "mode on port", process.env.PORT);
+        });
+    } catch (ex) {
+        console.log("TCL: ex", ex)
+    }
+    /** /HTTP Server Instance */
 });
