@@ -32,7 +32,7 @@ module.exports = () => {
                         _id: 0,
                         "TotalBooking._id": 1,
                         "TotalBooking.userBooked": 1,
-                        "TotalBooking.bookedFor": 1,
+                        "TotalBooking.bookedReason": 1,
                         "TotalBooking.sessionDate": 1,
                         "TotalBooking.startsAt": 1,
                         "TotalBooking.endsAt": 1,
@@ -41,13 +41,13 @@ module.exports = () => {
             ]);
 
             if (getInfo.length === 0) {
-                return res.send({ status: 0, response: getInfo });
+                return res.send({ status: 1, data: getInfo });
             } else {
                 let info = getInfo.map((event) => {
                     let arr = new Object();
                     arr.bookingId = event.TotalBooking._id
                     arr.userBooked = event.TotalBooking.userBooked;
-                    arr.bookedFor = event.TotalBooking.bookedFor;
+                    arr.bookedReason = event.TotalBooking.bookedReason;
                     arr.date = event.TotalBooking.sessionDate;
                     arr.startsAt = event.TotalBooking.startsAt;
                     arr.endsAt = event.TotalBooking.endsAt;
@@ -64,7 +64,7 @@ module.exports = () => {
         try {
             let roomsList = await db.findDocuments("room");
             if (roomsList.length === 0) {
-                return res.send({ status: 1, response: roomsList });
+                return res.send({ status: 1, data: roomsList });
             } else {
                 let info = roomsList.map((event) => {
                     let arr = new Object();
@@ -77,7 +77,7 @@ module.exports = () => {
                     arr.currentMeeting = event.currentMeeting;
                     return arr;
                 });
-                return res.send({ status: 1, response: info });
+                return res.send({ status: 1, data: info });
             }
         } catch (error) {
             return res.send({ status: 0, response: error });
@@ -98,7 +98,7 @@ module.exports = () => {
                     response: "starting time and ending time is not valid",
                 });
             }
-            checkExist = await Booking.findOne({
+            checkExist = await db.findSingleDocument("booking",{
                 $and: [
                     {
                         startsAt: {
@@ -149,7 +149,7 @@ module.exports = () => {
 
             getInfo = await Booking.findById({ _id: cancelMeeting.id });
             if (!getInfo) {
-                return res.send({ status: 1, response: getInfo });
+                return res.send({ status: 1, data: getInfo });
             }
             if (getInfo.status === 1) {
                 await db.updateOneDocument(
@@ -168,6 +168,7 @@ module.exports = () => {
             return res.send({ status: 0, response: error });
         }
     };
+
 
     router.getMyBookings = async (req, res) => {
         try {
@@ -191,7 +192,7 @@ module.exports = () => {
                 arr.bookingId = event._id
                 arr.roomName = event.RoomDetails[0].roomName;
                 arr.roomNo = event.RoomDetails[0].roomNo;
-                arr.bookedFor = event.bookedFor;
+                arr.bookedReason = event.bookedReason;
                 arr.date = event.sessionDate;
                 arr.startsAt = event.startsAt;
                 arr.endsAt = event.endsAt;

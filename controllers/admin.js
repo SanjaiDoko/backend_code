@@ -457,7 +457,7 @@ module.exports = () => {
         updateRoom = updateRoom.data[0]
       getRoom = await db.findSingleDocument("room",{ _id: updateRoom.id});
       if (!getRoom) {
-        return res.send({ status: 0, response: "No room found" });
+        return res.send({ status: 1, data: getRoom });
       } else {
      await db.updateOneDocument(
           "room",
@@ -478,7 +478,7 @@ module.exports = () => {
         deActivateRoom = deActivateRoom.data[0]
       getRoom = await db.findSingleDocument("room",{ _id: deActivateRoom.id });
       if (!getRoom) {
-        return res.send({ status: 0, response: "No room found" });
+        return res.send({ status: 1, data: getRoom });
       } else {
         if (getRoom.activeStatus === 1) {
           await db.findByIdAndUpdate("room",deActivateRoom.id,{activeStatus: 2})

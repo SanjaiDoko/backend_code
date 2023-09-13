@@ -13,10 +13,7 @@ const bookingSchema = mongoose.Schema({
     userBooked: {
         type: String
     },
-    bookedFor: {
-        type: String
-    },
-    description: {
+    bookedReason: {
         type: String
     },
     priority: {

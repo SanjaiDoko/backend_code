@@ -50,7 +50,7 @@ module.exports = function () {
         check("data").notEmpty().withMessage("Data cannot be empty"),
         check("data.*.roomId").notEmpty().withMessage("Room id is required field"),
         check("data.*.bookedBy").notEmpty().withMessage("User booking is required field"),
-        check("data.*.bookedFor").notEmpty().withMessage("Reason for booking is required field"),
+        check("data.*.bookedReason").notEmpty().withMessage("Reason for booking is required field"),
         check("data.*.headCount").notEmpty().withMessage("Head count is required field"),
         check("data.*.startsAt").notEmpty().withMessage("Start time is required field"),
         check("data.*.endsAt").notEmpty().withMessage("End time is required field"),
