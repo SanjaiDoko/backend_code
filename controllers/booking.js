@@ -41,7 +41,7 @@ module.exports = () => {
             ]);
 
             if (getInfo.length === 0) {
-                return res.send({ status: 1, data: JSON.stringify(getInfo)  });
+                return res.send({ status: 1, data: JSON.stringify(getInfo) });
             } else {
                 let info = getInfo.map((event) => {
                     let arr = new Object();
@@ -64,7 +64,7 @@ module.exports = () => {
         try {
             let roomsList = await db.findDocuments("room");
             if (roomsList.length === 0) {
-                return res.send({ status: 1, data: JSON.stringify(roomsList)  });
+                return res.send({ status: 1, data: JSON.stringify(roomsList) });
             } else {
                 let info = roomsList.map((event) => {
                     let arr = new Object();
@@ -100,6 +100,7 @@ module.exports = () => {
             }
             checkExist = await db.findSingleDocument("booking", {
                 $and: [
+                    { roomId: bookRoom.roomId },
                     {
                         startsAt: {
                             $lte: bookRoom.endsAt,
@@ -133,8 +134,8 @@ module.exports = () => {
             await db.findByIdAndUpdate("room", getBooking.roomId, {
                 $inc: { preBookings: 1 },
             });
-            // scheduleEmail(getBooking.startsAt, getBooking.email, getBooking.emailcc, getBooking.bookedFor)
-            // scheduleStartAndEnd(getBooking.startsAt, getBooking.endsAt, getBooking._id)
+            scheduleEmail(getBooking.startsAt, getBooking.email, getBooking.emailcc, getBooking.bookedFor)
+            scheduleStartAndEnd(getBooking.startsAt, getBooking.endsAt, getBooking._id)
             return res.send({ status: 1, response: "New booking created" });
         } catch (error) {
             return res.send({ status: 0, response: error });
@@ -149,7 +150,7 @@ module.exports = () => {
 
             getInfo = await Booking.findById({ _id: cancelMeeting.id });
             if (!getInfo) {
-                return res.send({ status: 1, data: JSON.stringify(getInfo)  });
+                return res.send({ status: 1, data: JSON.stringify(getInfo) });
             }
             if (getInfo.status === 1) {
                 await db.updateOneDocument(
@@ -186,6 +187,10 @@ module.exports = () => {
                     },
                 },
             ]);
+
+            if (getEvents.length === 0) {
+                return res.send({ status: 1, data: JSON.stringify(getEvents) });
+            }
 
             let info = getEvents.map((event) => {
                 let arr = {};
