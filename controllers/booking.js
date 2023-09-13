@@ -52,7 +52,7 @@ module.exports = () => {
 
     router.getAllRooms = async (req, res) => {
         try {
-            let roomsList = await Room.find()
+            let roomsList = await db.findDocuments("room")
             if (roomsList.length === 0) {
                 return res.send({ status: 1, response: roomsList })
             }
@@ -151,7 +151,6 @@ module.exports = () => {
             if (getEvents.length === 0) {
                 return res.send({ status: 1, response: getEvents })
             }
-            totalEvents = getEvents.length;
             let info = getEvents.map((event) => {
                 let arr = new Object() 
                 arr.bookedFor = event.bookedFor
@@ -161,7 +160,7 @@ module.exports = () => {
                 arr.status = event.status
                 return arr
             })
-            return res.send({ status: 1, response: { totalEvents, totalHistory: info } })
+            return res.send({ status: 1, data: info  })
         } catch (error) {
             return res.send({ status: 0, response: error })
         }

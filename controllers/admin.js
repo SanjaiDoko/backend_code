@@ -435,7 +435,7 @@ module.exports = () => {
       let createRoom = req.body, checkExist;
 
       createRoom = createRoom.data[0]
-      checkExist = await Room.findOne({ roomNo: createRoom.roomNo });
+      checkExist = await db.findSingleDocument("room",{ roomNo: createRoom.roomNo });
       if (checkExist) {
         return res.send({
           status: 0,
@@ -455,7 +455,7 @@ module.exports = () => {
       let updateRoom = req.body,
         getRoom;
         updateRoom = updateRoom.data[0]
-      getRoom = await Room.findById({ _id: updateRoom.id});
+      getRoom = await db.findSingleDocument("room",{ _id: updateRoom.id});
       if (!getRoom) {
         return res.send({ status: 0, response: "No room found" });
       } else {
@@ -476,15 +476,15 @@ module.exports = () => {
       let deActivateRoom = req.body,
         getRoom;
         deActivateRoom = deActivateRoom.data[0]
-      getRoom = await Room.findById({ _id: deActivateRoom.id });
+      getRoom = await db.findSingleDocument("room",{ _id: deActivateRoom.id });
       if (!getRoom) {
         return res.send({ status: 0, response: "No room found" });
       } else {
-        if (getRoom.activeStatus === true) {
-          await db.findByIdAndUpdate("room",deActivateRoom.id,{activeStatus: false})
+        if (getRoom.activeStatus === 1) {
+          await db.findByIdAndUpdate("room",deActivateRoom.id,{activeStatus: 2})
           return res.send({ status: 1, response: "Room updated" });
         }
-        await db.findByIdAndUpdate("room",deActivateRoom.id,{activeStatus: true})
+        await db.findByIdAndUpdate("room",deActivateRoom.id,{activeStatus: 1})
         return res.send({ status: 1, response: "Room updated" });
       }
     } catch (error) {
