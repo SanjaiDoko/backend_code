@@ -31,6 +31,7 @@ module.exports.message = ({
     addedCountryCitySucess: "County City List Added Sucessfully",
     countryExist: "Country Already Exists",
     addedGroupSucess: "Group Added Successfully",
+    chatSentSucess: "Chat sent Successfully",
     updateGroupSucess: "Group Updated Successfully",
     removeUserGroupSucess: "User Removed From Group Successfully",
     notFoundCountry: "Country Not Found",

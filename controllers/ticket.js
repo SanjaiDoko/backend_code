@@ -385,6 +385,17 @@ module.exports = () => {
         {
           $lookup: {
             from: "users",
+            localField: "createdBy",
+            foreignField: "_id",
+            as: "createdByDetails",
+          },
+        },
+        {
+          $unwind: "$createdByDetails",
+        },
+        {
+          $lookup: {
+            from: "users",
             localField: "assignedTo",
             foreignField: "_id",
             as: "assignedDetails",
@@ -420,7 +431,9 @@ module.exports = () => {
             timeLog: 1,
             ticketId: 1,
             problem: 1,
-            resolution: 1
+            resolution: 1,
+            createdBy: 1,
+            createdByName: "$createdByDetails.fullName",
           },
         },
       ];
@@ -488,6 +501,19 @@ module.exports = () => {
           },
         },
         {
+          $lookup: {
+            from: "users",
+            localField: "createdBy",
+            foreignField: "_id",
+            as: "createdDetails",
+          },
+        },
+        {
+          $unwind: {
+            path: "$createdDetails",
+          },
+        },
+        {
           $match: condition,
         },
         {
@@ -501,6 +527,7 @@ module.exports = () => {
             mailList: 1,
             status: 1,
             createdAt: 1,
+            createdBy: 1,
             issueGroup: 1,
             assignedName: "$assignedDetails.fullName",
             assignedTo: "$assignedDetails._id",
