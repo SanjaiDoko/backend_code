@@ -188,6 +188,7 @@ module.exports = () => {
 
       let info = getEvents.map((event) => {
         let arr = {};
+        arr.bookingId = event._id
         arr.roomName = event.RoomDetails[0].roomName;
         arr.roomNo = event.RoomDetails[0].roomNo;
         arr.bookedFor = event.bookedFor;
