@@ -77,7 +77,7 @@ module.exports = () => {
                     arr.currentMeeting = event.currentMeeting;
                     return arr;
                 });
-                return res.send({ status: 1, data: info });
+                return res.send({ status: 1, data: JSON.stringify(info) });
             }
         } catch (error) {
             return res.send({ status: 0, response: error });
@@ -98,7 +98,7 @@ module.exports = () => {
                     response: "starting time and ending time is not valid",
                 });
             }
-            checkExist = await db.findSingleDocument("booking",{
+            checkExist = await db.findSingleDocument("booking", {
                 $and: [
                     {
                         startsAt: {
@@ -128,7 +128,7 @@ module.exports = () => {
             await db.updateOneDocument(
                 "booking",
                 { _id: getBooking._id },
-                { sessionDate: getBooking.startsAt }
+                { sessionDate: getBooking.startsAt, email: getUser.email }
             );
             await db.findByIdAndUpdate("room", getBooking.roomId, {
                 $inc: { preBookings: 1 },
