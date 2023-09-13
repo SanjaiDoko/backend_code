@@ -10,8 +10,8 @@ const roomSchema = mongoose.Schema({
         type:String,
     },
     status:{
-        type:Boolean,
-        default:0
+        type:Number,
+        default:1
     },
     currentMeeting:{
         bookedBy:{type:ObjectId},
@@ -22,7 +22,7 @@ const roomSchema = mongoose.Schema({
         default:0
     },
     activeStatus:{
-        type:Boolean,
+        type:Number,
         default:1
     }
 },{

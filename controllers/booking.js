@@ -4,6 +4,7 @@ const mongoose = require("mongoose")
 const { ObjectId } = require("bson");
 const db = require("../model/mongodb");
 const { scheduleEmail, scheduleStartAndEnd } = require('../model/common.js')
+
 module.exports = () => {
     let router = {}
 
@@ -58,6 +59,7 @@ module.exports = () => {
             else {
                 let info = roomsList.map((event) => {
                     let arr = new Object()
+                    arr.roomId = event._id
                     arr.roomName = event.roomName
                     arr.roomNo = event.roomNo
                     arr.preBookings = event.preBookings
@@ -75,7 +77,7 @@ module.exports = () => {
 
     router.bookRoom = async (req, res) => {
         try {
-            let bookRoom = req.body, getBooking, checkExist;
+            let bookRoom = req.body, getBooking, checkExist,getUser;
             bookRoom = bookRoom.data[0]
 
             if (bookRoom.endsAt < bookRoom.startsAt) {
@@ -98,73 +100,22 @@ module.exports = () => {
                     return res.send({ status: 0, response: `Not available, This slot was already booked by ${checkExist.userBooked} ` })
                 }
             }
-
+            getUser = await db.findSingleDocument("user",{_id:bookRoom.bookedBy})
+            bookRoom.userBooked = getUser.fullName
             getBooking = await db.insertSingleDocument("booking", bookRoom)
             await db.updateOneDocument("booking", { _id: getBooking._id },
                 { sessionDate: getBooking.startsAt })
             await db.findByIdAndUpdate("room", getBooking.roomId, { $inc: { preBookings: 1 } })
-            scheduleEmail(getBooking.startsAt, getBooking.email, getBooking.emailcc, getBooking.bookedFor)
-            scheduleStartAndEnd(getBooking.startsAt, getBooking.endsAt, getBooking._id)
+            // scheduleEmail(getBooking.startsAt, getBooking.email, getBooking.emailcc, getBooking.bookedFor)
+            // scheduleStartAndEnd(getBooking.startsAt, getBooking.endsAt, getBooking._id)
             return res.send({ status: 1, response: "New booking created" })
         } catch (error) {
             return res.send({ status: 0, response: error })
         }
     }
 
-    router.startMeeting = async (req, res) => {
-        try {
-            let startMeeting = req.body, getInfo;
-            startMeeting = startMeeting.data[0];
-
-            getInfo = await Booking.findById({ _id: startMeeting.id })
-            if (!getInfo) {
-                return res.send({ status: 0, response: getInfo })
-            }
-            if (getInfo.status === 1) {
-                await db.updateOneDocument("booking",
-                    { _id: new ObjectId(startMeeting.id) },
-                    { status: 2 })
-                await db.findByIdAndUpdate("room", getInfo.roomId, { status: 1, currentMeeting: { bookedBy: getInfo.bookedBy, reason: getInfo.bookedFor } })
-                return res.send({ status: 1, reponse: "Meeting started" })
-            }
-            if (getInfo.status === 2) {
-                return res.send({ status: 1, response: "Meeting already started" })
-            }
-            else {
-                return res.send({ status: 0, response: "Not a valid status" })
-            }
-        } catch (error) {
-            return res.send({ status: 0, response: error })
-        }
-    }
-
-
-    router.endMeeting = async (req, res) => {
-        try {
-            let stopMeeting = req.body, getInfo;
-            stopMeeting = stopMeeting.data[0];
-
-            getInfo = await Booking.findById({ _id: stopMeeting.id })
-
-            if (getInfo.status === 2) {
-                await db.updateOneDocument("booking",
-                    { _id: new ObjectId(stopMeeting.id) },
-                    { status: 3, actualEndTime: Date.now() })
-                await db.findByIdAndUpdate("room", getInfo.roomId, { status: 0, $inc: { preBookings: -1 } })
-                return res.send({ status: 1, reponse: "Meeting ended" })
-            }
-            if (getInfo.status === 3) {
-                return res.send({ status: 1, response: "Meeting as already been stopped" })
-            }
-            else {
-                return res.send({ status: 0, response: "Not a valid status" })
-            }
-        } catch (error) {
-            return res.send({ status: 0, response: error })
-        }
-    }
-
-
+    
+    
     router.cancelMeeting = async (req, res) => {
         try {
             let cancelMeeting = req.body, getInfo;
@@ -176,8 +127,8 @@ module.exports = () => {
             }
             if (getInfo.status === 1) {
                 await db.updateOneDocument("booking",
-                    { _id: new ObjectId(cancelMeeting.id) },
-                    { status: 0 })
+                { _id: new ObjectId(cancelMeeting.id) },
+                { status: 0 })
                 await db.findByIdAndUpdate("room", getInfo.roomId, { $inc: { preBookings: -1 } })
                 return res.send({ status: 1, reponse: "Meeting cancelled" })
             }
@@ -190,31 +141,8 @@ module.exports = () => {
     }
 
 
-    router.getByDate = async (req, res) => {
-        try {
-            let getByDate = req.body, getEvents, totalEvents;
-            getByDate = getByDate.data[0];
-            getEvents = await db.findDocuments("booking", { roomId: new ObjectId(getByDate.roomId), sessionDate: getByDate.date })
-            if (getEvents.length === 0) {
-                return res.send({ status: 1, response: getEvents })
-            }
-            totalEvents = getEvents.length
-            let info = getEvents.map((event) => {
-                let arr = new Object()
-                arr.bookedBy = event.bookedBy
-                arr.bookedFor = event.bookedFor
-                arr.date = event.sessionDate
-                arr.startsAt = event.startsAt
-                arr.endsAt = event.endsAt
-                return arr
-            })
-            return res.send({ status: 1, response: { totalEvents: totalEvents, info } })
-        } catch (error) {
-            return res.send({ status: 0, response: error })
-        }
-    }
-
-
+    
+    
     router.getMyBookings = async (req, res) => {
         try {
             let getMyHistory = req.body, getEvents, totalEvents;
@@ -224,11 +152,98 @@ module.exports = () => {
                 return res.send({ status: 1, response: getEvents })
             }
             totalEvents = getEvents.length;
-            return res.send({ status: 1, response: { totalEvents, totalHistory: getEvents } })
+            let info = getEvents.map((event) => {
+                let arr = new Object() 
+                arr.bookedFor = event.bookedFor
+                arr.date = event.sessionDate
+                arr.startsAt = event.startsAt
+                arr.endsAt = event.endsAt
+                arr.status = event.status
+                return arr
+            })
+            return res.send({ status: 1, response: { totalEvents, totalHistory: info } })
         } catch (error) {
             return res.send({ status: 0, response: error })
         }
     }
-
+    
     return router
 }
+
+
+
+// router.startMeeting = async (req, res) => {
+    //     try {
+        //         let startMeeting = req.body, getInfo;
+        //         startMeeting = startMeeting.data[0];
+        
+        //         getInfo = await Booking.findById({ _id: startMeeting.id })
+        //         if (!getInfo) {
+            //             return res.send({ status: 0, response: getInfo })
+            //         }
+            //         if (getInfo.status === 1) {
+                //             await db.updateOneDocument("booking",
+                //                 { _id: new ObjectId(startMeeting.id) },
+                //                 { status: 2 })
+                //             await db.findByIdAndUpdate("room", getInfo.roomId, { status: 1, currentMeeting: { bookedBy: getInfo.bookedBy, reason: getInfo.bookedFor } })
+                //             return res.send({ status: 1, reponse: "Meeting started" })
+                //         }
+                //         if (getInfo.status === 2) {
+                    //             return res.send({ status: 1, response: "Meeting already started" })
+                    //         }
+                    //         else {
+                        //             return res.send({ status: 0, response: "Not a valid status" })
+    //         }
+    //     } catch (error) {
+        //         return res.send({ status: 0, response: error })
+        //     }
+        // }
+        
+        
+        // router.endMeeting = async (req, res) => {
+            //     try {
+                //         let stopMeeting = req.body, getInfo;
+                //         stopMeeting = stopMeeting.data[0];
+                
+                //         getInfo = await Booking.findById({ _id: stopMeeting.id })
+                
+                //         if (getInfo.status === 2) {
+    //             await db.updateOneDocument("booking",
+    //                 { _id: new ObjectId(stopMeeting.id) },
+    //                 { status: 3, actualEndTime: Date.now() })
+    //             await db.findByIdAndUpdate("room", getInfo.roomId, { status: 0, $inc: { preBookings: -1 } })
+    //             return res.send({ status: 1, reponse: "Meeting ended" })
+    //         }
+    //         if (getInfo.status === 3) {
+        //             return res.send({ status: 1, response: "Meeting as already been stopped" })
+        //         }
+        //         else {
+            //             return res.send({ status: 0, response: "Not a valid status" })
+            //         }
+            //     } catch (error) {
+                //         return res.send({ status: 0, response: error })
+                //     }
+                // }
+                // router.getByDate = async (req, res) => {
+                //     try {
+                //         let getByDate = req.body, getEvents, totalEvents;
+                //         getByDate = getByDate.data[0];
+                //         getEvents = await db.findDocuments("booking", { roomId: new ObjectId(getByDate.roomId), sessionDate: getByDate.date })
+                //         if (getEvents.length === 0) {
+                    //             return res.send({ status: 1, response: getEvents })
+                //         }
+                //         totalEvents = getEvents.length
+                //         let info = getEvents.map((event) => {
+                    //             let arr = new Object()
+                //             arr.bookedBy = event.bookedBy
+                //             arr.bookedFor = event.bookedFor
+                //             arr.date = event.sessionDate
+                //             arr.startsAt = event.startsAt
+                //             arr.endsAt = event.endsAt
+                //             return arr
+                //         })
+                //         return res.send({ status: 1, response: { totalEvents: totalEvents, info } })
+                //     } catch (error) {
+                    //         return res.send({ status: 0, response: error })
+                //     }
+                // }
