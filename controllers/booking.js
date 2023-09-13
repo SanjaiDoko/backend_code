@@ -41,7 +41,7 @@ module.exports = () => {
             ]);
 
             if (getInfo.length === 0) {
-                return res.send({ status: 1, data: getInfo });
+                return res.send({ status: 1, data: JSON.stringify(getInfo)  });
             } else {
                 let info = getInfo.map((event) => {
                     let arr = new Object();
@@ -64,7 +64,7 @@ module.exports = () => {
         try {
             let roomsList = await db.findDocuments("room");
             if (roomsList.length === 0) {
-                return res.send({ status: 1, data: roomsList });
+                return res.send({ status: 1, data: JSON.stringify(roomsList)  });
             } else {
                 let info = roomsList.map((event) => {
                     let arr = new Object();
@@ -149,7 +149,7 @@ module.exports = () => {
 
             getInfo = await Booking.findById({ _id: cancelMeeting.id });
             if (!getInfo) {
-                return res.send({ status: 1, data: getInfo });
+                return res.send({ status: 1, data: JSON.stringify(getInfo)  });
             }
             if (getInfo.status === 1) {
                 await db.updateOneDocument(
