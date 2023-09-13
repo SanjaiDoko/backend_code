@@ -173,7 +173,7 @@ module.exports = () => {
     try {
       let getMyHistory = req.body,
         getEvents;
-        
+
       getMyHistory = getMyHistory.data[0];
       getEvents = await Booking.aggregate([
         {
@@ -197,7 +197,8 @@ module.exports = () => {
         arr.status = event.status;
         return arr;
       });
-      return res.send({ status: 1, data: info });
+    
+      return res.send({ status: 1, data: JSON.stringify(info)  });
     } catch (error) {
       return res.send({ status: 0, response: error });
     }
