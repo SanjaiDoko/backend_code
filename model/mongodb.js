@@ -6,6 +6,15 @@ const user = require('../schema/user')
 const ticket = require('../schema/ticket')
 const group = require("../schema/group")
 const feedBack = require("../schema/feedBack")
+const chat = require("../schema/chat")
+// const userDetail = require('../schema/main/userDetail')
+// const country = require('../schema/main/country')
+// const costHeading = require('../schema/main/costHeading')
+// const lane = require('../schema/main/lane')
+// const countryCityList = require('../schema/main/countryCityList')
+// const portHoliday = require('../schema/main/holiday')
+// const schedule = require('../schema/main/schedule')
+// const cfs = require('../schema/main/cfs')
 const internal = require('../schema/internal')
 const eod =  require('../schema/eod')
 const room = require("../schema/room")
@@ -23,6 +32,15 @@ const db = {
   feedBack,
   eod,
   booking,
+  chat,
+//   userDetail,
+//   country,
+//   costHeading,
+//   lane,
+//   countryCityList,
+//   portHoliday,
+//   schedule,
+//   cfs,
   internal,
   sessionManagement
 }
