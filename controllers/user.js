@@ -8,6 +8,7 @@ const { message } = require("../model/message");
 const { ObjectId } = require("bson");
 const { default: mongoose } = require("mongoose");
 const jwt = require("jsonwebtoken");
+
 // const db = require('../model/mongodb')
 
 module.exports = () => {
@@ -89,6 +90,46 @@ module.exports = () => {
               return console.log(error);
             }
             console.log(`Forgot Password Mail sent:  - ${info.messageId}`);
+          });
+        }
+      }
+    );
+  };
+
+  const eodMail = async (mailData) => {
+    ejs.renderFile(
+      `${templatePathUser}/eodMail.ejs`,
+      {
+        fullName: mailData.fullName,
+        email: mailData.emailTo,
+        userName: mailData.userName,
+        url: mailData.url,
+      },
+      (err, data) => {
+        if (err) {
+          console.log(err);
+        } else {
+          let mailOptions = {
+            from: process.env.SMTP_AUTH_USER,
+            to: mailData.emailTo,
+            cc: mailData.mail,
+            subject: `CRM | EOD MAIL - ${(mailData.userName).toUpperCase()}`,
+            html: data,
+          };
+
+          //Send Mail
+          transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+              if (mailResendAttempts !== 0) {
+                eodMail(mailData);
+                mailResendAttempts--;
+              } else {
+                mailResendAttempts = 2;
+              }
+              console.log(`Eod Mail Not Sent - ${error}`);
+              return console.log(error);
+            }
+            console.log(`Eod Mail sent:  - ${info.messageId}`);
           });
         }
       }
@@ -584,7 +625,8 @@ router.insertChat = async (req, res) => {
     let data = { status: 0, response: "Invalid Request" },
       eodData = req.body,
       insertEod,
-      managerId;
+      managerId,
+      managerData, userData, checkExist
 
     try {
       if (Object.keys(eodData).length === 0 && eodData.data === undefined) {
@@ -593,20 +635,49 @@ router.insertChat = async (req, res) => {
       eodData = eodData.data[0];
       eodData.systemInfo = req.rawHeaders;
 
+      checkExist = await db.findOneDocumentExists("eod", {eodDate: eodData.eodDate })
+
+      if(checkExist === true){
+       
+         return res.send({status:0, response: "You Already given eod status for today"})
+      }
+
       managerId = await db.findSingleDocument(
         "group",
         { _id: new ObjectId(eodData.groupId) },
-        { managedBy: 1 }
+        { managedBy: 1, fullName: 1, _id: 1 }
+      );
+
+      managerData = await db.findSingleDocument(
+        "user",
+        { _id: new ObjectId(managerId.managedBy.toString()) },
+        { fullName: 1, _id: 1, email: 1 }
+      );
+
+      userData = await db.findSingleDocument(
+        "user",
+        { _id: new ObjectId(eodData.createdBy) },
+        { fullName: 1 }
       );
 
       if (managerId === null) {
         return res.send(data);
       }
 
+      
+
       eodData.managedBy = managerId.managedBy.toString();
+
       insertEod = await db.insertSingleDocument("eod", eodData);
 
       if (insertEod) {
+        await eodMail({
+          emailTo: managerData.email,
+          fullName: managerData.fullName,
+          mail: eodData.ccMail,
+          userName: userData.fullName,
+          url: `${process.env.UIURL}/user/managereodview`,
+        });
         return res.send({ status: 1, response: "Successfully inserted" });
       }
 
@@ -646,7 +717,7 @@ router.insertChat = async (req, res) => {
   router.getEodsByManagerId = async (req, res) => {
     let data = { status: 0, response: "Invalid Request" },
       eodPayload = req.body,
-      eods;
+      eods, startDate, endDate
 
     try {
       if (
@@ -657,9 +728,9 @@ router.insertChat = async (req, res) => {
       }
 
       eodPayload = eodPayload.data[0];
-      const startDate = new Date(eodPayload.startDate)
+      startDate = new Date(eodPayload.startDate)
       startDate.setUTCHours(0, 0, 0, 0)
-      const endDate = new Date(eodPayload.endDate)
+      endDate = new Date(eodPayload.endDate)
       endDate.setUTCHours(23, 59, 59, 999)
       eods = await db.findDocuments(
         "eod",
@@ -696,6 +767,8 @@ router.insertChat = async (req, res) => {
         return res.send({ status: 0, response: message.invalidId });
       }
 
+      let existingEod = await db.findSingleDocument("eod",{_id: new ObjectId(eodPayload.id)}, {createdBy: 1, managedBy: 1})
+
       let token = req.headers.authorization;
       token = token.substring(7);
 
@@ -703,7 +776,7 @@ router.insertChat = async (req, res) => {
       if (!decodedToken) {
         return res.status(401).send("Unauthorized");
       } else {
-        if (decodedToken.userId !== eodPayload.managedBy || decodedToken.userId !== eodPayload.createdBy) {
+        if (!(decodedToken.userId !== existingEod.managedBy.toString() || decodedToken.userId !== existingEod.createdBy.toString())) {
           return res.status(401).send("Unauthorized");
         }
       }

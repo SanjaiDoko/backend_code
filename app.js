@@ -14,7 +14,7 @@ app.options("*", cors());
 
 app.use(
   cors({
-    origin: process.env.UIURL,
+    origin: "*",
     methods: ["GET", "POST"],
     allowedHeaders: [
       "Origin",
@@ -26,7 +26,7 @@ app.use(
   })
 );
 
-const io = socketIo(3008, {
+const io = socketIo(process.env.SOCKETPORT, {
   cors: {
     origin: process.env.UIURL,
   },
