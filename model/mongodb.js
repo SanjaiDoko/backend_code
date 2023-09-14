@@ -17,6 +17,8 @@ const chat = require("../schema/chat")
 // const cfs = require('../schema/main/cfs')
 const internal = require('../schema/internal')
 const eod =  require('../schema/eod')
+const room = require("../schema/room")
+const booking = require("../schema/booking")
 
 const sessionManagement = require("../schema/sessionManagement")
 const { ObjectId } = require('bson')
@@ -26,8 +28,10 @@ const db = {
   user,
   ticket,
   group,
+  room,
   feedBack,
   eod,
+  booking,
   chat,
 //   userDetail,
 //   country,

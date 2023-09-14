@@ -1,6 +1,4 @@
 const { default: mongoose } = require("mongoose");
-const common = require("../model/common");
-const Room = require("../schema/room.js");
 const { message } = require("../model/message");
 const db = require("../model/mongodb");
 const { ObjectId } = require("bson");
@@ -432,33 +430,37 @@ module.exports = () => {
   // roomBookingController
   router.createRoom = async (req, res) => {
     try {
-      let { roomName, roomNo } = req.body,
-        checkExist;
-      checkExist = await Room.findOne({ roomNo: roomNo });
+      let createRoom = req.body, checkExist;
+
+      createRoom = createRoom.data[0]
+      checkExist = await db.findSingleDocument("room",{ roomNo: createRoom.roomNo });
       if (checkExist) {
         return res.send({
           status: 0,
           response: "Room with same number already exist",
         });
       }
-      await Room.create({ roomName, roomNo });
+      await db.insertSingleDocument("room", createRoom)
       return res.send({ status: 1, response: "Room created" });
     } catch (error) {
       return res.send({ status: 0, response: error });
     }
   };
 
+  
   router.updateRoom = async (req, res) => {
     try {
-      let { id, roomName, roomNo } = req.body,
+      let updateRoom = req.body,
         getRoom;
-      getRoom = await Room.findById({ _id: id });
+        updateRoom = updateRoom.data[0]
+      getRoom = await db.findSingleDocument("room",{ _id: updateRoom.id});
       if (!getRoom) {
-        return res.send({ status: 0, response: "No room found" });
+        return res.send({ status: 1, data: JSON.stringify(getRoom)  });
       } else {
-        await Room.updateOne(
-          { _id: id },
-          { roomName: roomName, roomNo, roomNo }
+     await db.updateOneDocument(
+          "room",
+          { _id: new ObjectId(updateRoom.id) },
+         updateRoom
         );
         return res.send({ status: 1, response: "Room updated" });
       }
@@ -467,31 +469,28 @@ module.exports = () => {
     }
   };
 
+
   router.deleteRoom = async (req, res) => {
     try {
-      let { id } = req.body,
+      let deActivateRoom = req.body,
         getRoom;
-      getRoom = await Room.findById({ _id: id });
+        deActivateRoom = deActivateRoom.data[0]
+      getRoom = await db.findSingleDocument("room",{ _id: deActivateRoom.id });
       if (!getRoom) {
-        return res.send({ status: 0, response: "No room found" });
+        return res.send({ status: 1, data: JSON.stringify(getRoom)  });
       } else {
-        if (getRoom.activeStatus === true) {
-          await Room.findByIdAndUpdate(
-            { _id: getRoom._id },
-            { activeStatus: false }
-          );
+        if (getRoom.activeStatus === 1) {
+          await db.findByIdAndUpdate("room",deActivateRoom.id,{activeStatus: 2})
           return res.send({ status: 1, response: "Room updated" });
         }
-        await Room.findByIdAndUpdate(
-          { _id: getRoom._id },
-          { activeStatus: true }
-        );
+        await db.findByIdAndUpdate("room",deActivateRoom.id,{activeStatus: 1})
         return res.send({ status: 1, response: "Room updated" });
       }
     } catch (error) {
       return res.send({ status: 0, response: error });
     }
   };
+
 
   return router;
 };
