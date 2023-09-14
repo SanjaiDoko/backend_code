@@ -134,7 +134,8 @@ module.exports = () => {
             await db.findByIdAndUpdate("room", getBooking.roomId, {
                 $inc: { preBookings: 1 },
             });
-            scheduleEmail(getBooking.startsAt, getBooking.email, getBooking.emailcc, getBooking.bookedFor)
+
+            scheduleEmail(getBooking.startsAt, getUser.email, getBooking.emailcc, getBooking.bookedReason)
             scheduleStartAndEnd(getBooking.startsAt, getBooking.endsAt, getBooking._id)
             return res.send({ status: 1, response: "New booking created" });
         } catch (error) {
