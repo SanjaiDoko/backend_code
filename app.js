@@ -9,6 +9,9 @@ const server = require("http").createServer(app);
 const morgan = require("morgan");
 const cors = require("cors");
 const socketIo = require("socket.io");
+const jwt = require("jsonwebtoken");
+const fss = require("fs").promises;
+const common = require("./model/common");
 
 app.options("*", cors());
 
@@ -45,6 +48,26 @@ const getUser = (receiverId, curentUser) => {
   console.log(curentUser.filter((user) => user.userId === receiverId)),"adasdasdasd";
   return(curentUser.filter((user) => user.userId === receiverId));
 };
+
+io.use(async (socket, next) => {
+  try {
+    const token = socket.handshake.query.token;
+
+    let privateKey = await fss.readFile("privateKey.key", "utf8");
+   
+    let verifyAccessToken = jwt.verify(token, privateKey, {
+      algorithms: ["RS256"],
+    });
+    let checkAccessAuth = await common.checkUserInDB(verifyAccessToken);
+    if (checkAccessAuth == null || checkAccessAuth.length === 0) {
+      return res.status(401).send("Unauthorized");
+    }
+    next();
+  } catch (error) {
+    next(new Error('Authentication failed'));
+  }
+});
+
 
 io.on("connection", (socket) => {
 
