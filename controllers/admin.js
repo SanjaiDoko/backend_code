@@ -1,6 +1,4 @@
 const { default: mongoose } = require("mongoose");
-const common = require("../model/common");
-const Room = require("../schema/room.js");
 const { message } = require("../model/message");
 const db = require("../model/mongodb");
 const { ObjectId } = require("bson");
@@ -443,13 +441,13 @@ module.exports = () => {
         });
       }
       await db.insertSingleDocument("room", createRoom)
-      // await Room.create({ roomName:createBooking, roomNo:createBooking.roomNo });
       return res.send({ status: 1, response: "Room created" });
     } catch (error) {
       return res.send({ status: 0, response: error });
     }
   };
 
+  
   router.updateRoom = async (req, res) => {
     try {
       let updateRoom = req.body,
@@ -471,6 +469,7 @@ module.exports = () => {
     }
   };
 
+
   router.deleteRoom = async (req, res) => {
     try {
       let deActivateRoom = req.body,
@@ -491,6 +490,7 @@ module.exports = () => {
       return res.send({ status: 0, response: error });
     }
   };
+
 
   return router;
 };
