@@ -95,6 +95,45 @@ module.exports = () => {
     );
   };
 
+  const eodMail = async (mailData) => {
+    ejs.renderFile(
+      `${templatePathUser}/forgotPassword.ejs`,
+      {
+        fullName: mailData.fullName,
+        email: mailData.emailTo,
+        url: mailData.url,
+        otp: mailData.otp,
+      },
+      (err, data) => {
+        if (err) {
+          console.log(err);
+        } else {
+          let mailOptions = {
+            from: process.env.SMTP_AUTH_USER,
+            to: mailData.emailTo,
+            subject: `CRM | Attention! Password Reset Request`,
+            html: data,
+          };
+
+          //Send Mail
+          transporter.sendMail(mailOptions, (error, info) => {
+            if (error) {
+              if (mailResendAttempts !== 0) {
+                eodMail(mailData);
+                mailResendAttempts--;
+              } else {
+                mailResendAttempts = 2;
+              }
+              console.log(`Eod Mail Not Sent - ${error}`);
+              return console.log(error);
+            }
+            console.log(`Eod Mail sent:  - ${info.messageId}`);
+          });
+        }
+      }
+    );
+  };
+
   router.registration = async (req, res) => {
     let data = { status: 0, response: "Invalid request" },
       userData = req.body,
@@ -596,7 +635,7 @@ router.insertChat = async (req, res) => {
       managerId = await db.findSingleDocument(
         "group",
         { _id: new ObjectId(eodData.groupId) },
-        { managedBy: 1 }
+        { managedBy: 1, fullName: 1, _id: 1 }
       );
 
       if (managerId === null) {
@@ -604,9 +643,15 @@ router.insertChat = async (req, res) => {
       }
 
       eodData.managedBy = managerId.managedBy.toString();
+      eodData.Date = new Date(eodData.Date).toISOString()
       insertEod = await db.insertSingleDocument("eod", eodData);
 
       if (insertEod) {
+        await forgotPasswordMail({
+          emailTo: managerId.email,
+          fullName: managerId.fullName,
+          url: "http://localhost:5173/change-password/" + managerId._id + "/1",
+        });
         return res.send({ status: 1, response: "Successfully inserted" });
       }
 
@@ -657,16 +702,22 @@ router.insertChat = async (req, res) => {
       }
 
       eodPayload = eodPayload.data[0];
-      const startDate = new Date(eodPayload.startDate)
-      startDate.setUTCHours(0, 0, 0, 0)
-      const endDate = new Date(eodPayload.endDate)
-      endDate.setUTCHours(23, 59, 59, 999)
+      const startDate = new Date(eodPayload.startDate).toISOString()
+      // startDate.setUTCHours(0, 0, 0, 0)
+      const endDate = new Date(eodPayload.endDate).toISOString()
+      // endDate.setUTCHours(23, 59, 59, 999)
       eods = await db.findDocuments(
         "eod",
         {
           managedBy: new ObjectId(eodPayload.managedBy),
           createdBy: new ObjectId(eodPayload.createdBy),
           eodDate: { $gte: startDate, $lte: endDate },
+          $expr: {
+            $and: [
+              { $gte: [{ $dateToString: { format: "%Y-%m-%d", date: "$eodDate" } }, "$startDate"] },
+              { $lte: [{ $dateToString: { format: "%Y-%m-%d", date: "$eodDate" } }, "$endDate"] }
+            ]
+          }
         },
         { systemInfo: 0, updatedAt: 0 }
       );
