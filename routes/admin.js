@@ -11,6 +11,8 @@ module.exports = (app) => {
 
     const admin = require("../controllers/admin")();
     const groupValidation = require("../validation/admin/groupValidation")()
+    const roomValidation  = require("../validation/booking/booking")()
+
 
     app.post("/admin/register", admin.adminRegistration, admin.adminRegistration)
 
@@ -28,9 +30,9 @@ module.exports = (app) => {
     // app.post("/admin/register", admin.registration)
 
     //roomApi's
-    app.post("/deleteRoom", admin.deleteRoom)
-    app.post("/createRoom", admin.createRoom)
-    app.post("/updateRoom", admin.updateRoom)
+    app.post("/room/deleteRoom",roomValidation.checkDeactivate, admin.deleteRoom)
+    app.post("/room/createRoom",roomValidation.checkRoom, admin.createRoom)
+    app.post("/room/updateRoom",roomValidation.checkUpdateRoom, admin.updateRoom)
   } catch (error) {
     console.log(error.message);
   }

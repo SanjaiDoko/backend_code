@@ -16,8 +16,7 @@ const fsRead = require("fs");
 // const { transporter } = require('./mail')
 // const imagePath = path.join(__dirname, "/../public/assets", "allmastersbanner.png");
 // let mailResendAttempts = 2
-const booking = require("../schema/booking.js")
-const notifier = require('node-notifier');
+
 const { default: mongoose } = require("mongoose");
 const { transporter } = require("./mail");
 //convert the reading file to base64
@@ -442,10 +441,10 @@ const loginParameter = async (model, loginData, res, req) => {
     status: 1
   });
 
-  if(loginData.type === 1 && user?.groupId === null){
-    return res.send({status:0,response: "You are not added any group, Please wait some time"})
+  if (loginData.type === 1 && user?.groupId === null) {
+    return res.send({ status: 0, response: "You are not added any group, Please wait some time" })
   }
-  
+
   if (user !== null && Object.keys(user).length !== 0) {
     if (user.password !== undefined) {
       // && (user.logoutTime === undefined || user.logoutTime !== null)
@@ -674,7 +673,7 @@ const sendEmail = (creator, teamMates, reason, timing) => {
         if (error) {
           console.error('Error sending email:', error);
         } else {
-          console.log('Email sent:', info.response);
+          console.log("Reminder email send successfully");
         }
       });
     }
@@ -706,6 +705,49 @@ const scheduleEmail = (eventStartTime, emailTo, emailCC, reason) => {
 };
 
 
+const changeStatusStart = async (bookingId) => {
+  await db.findByIdAndUpdate("booking", bookingId, { status: 2 })
+}
+
+const changeStatusEnd = async (bookingId) => {
+  await db.findByIdAndUpdate("booking", bookingId, { status: 3 })
+}
+
+const scheduleStartAndEnd = (startTime, endTime, bookingId) => {
+  try {
+    let data, dateInfo, month, dayInWeek, hours, minutes, cronExpressionStart, cronExpressionEnd;
+
+    data = moment(startTime).utc().format("LLLL'");
+    dateInfo = data.split(" ")
+    month = dateInfo[2].slice(0, 2);
+    dayInWeek = dateInfo[0].split(",")[0]
+    hours = moment(startTime).hours()
+    minutes = moment(startTime).minutes()
+    cronExpressionStart = `${minutes} ${hours} ${month} ${dateInfo[1]} ${dayInWeek}`;
+    console.log(cronExpressionStart);
+    cron.schedule(cronExpressionStart, () => {
+      changeStatusStart(bookingId)
+      console.log('Meeting started.');
+    });
+
+    data = moment(endTime).utc().format("LLLL'");
+    dateInfo = data.split(" ")
+    month = dateInfo[2].slice(0, 2);
+    dayInWeek = dateInfo[0].split(",")[0]
+    hours = moment(endTime).hours()
+    minutes = moment(endTime).minutes()
+    cronExpressionEnd = `${minutes} ${hours} ${month} ${dateInfo[1]} ${dayInWeek}`;
+    console.log(cronExpressionEnd);
+    cron.schedule(cronExpressionEnd, () => {
+      changeStatusEnd(bookingId)
+      console.log('Meeting ended');
+    });
+  } catch (error) {
+    console.log(error);
+  }
+}
+
+
 
 module.exports = {
   uploadFileAzure,
@@ -726,5 +768,6 @@ module.exports = {
   checkAccess,
   deleteFilesInFolder,
   getImageAsBase64,
-  scheduleEmail
+  scheduleEmail,
+  scheduleStartAndEnd
 };

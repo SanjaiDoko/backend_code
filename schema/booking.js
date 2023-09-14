@@ -3,52 +3,52 @@ const mongoose = require("mongoose")
 let ObjectId = mongoose.Schema.Types.ObjectId
 
 const bookingSchema = mongoose.Schema({
-    roomId:{
-        type:ObjectId,
-        ref:"rooms"
+    roomId: {
+        type: ObjectId,
+        ref: "rooms"
     },
-    bookedBy:{
+    bookedBy: {
         type: ObjectId
     },
-    bookedFor:{
-        type:String
+    userBooked: {
+        type: String
     },
-    description:{
-        type:String
+    bookedReason: {
+        type: String
     },
-    priority:{
-        type:Number,
-        default:2
+    priority: {
+        type: Number,
+        default: 2
     },
-    headCount:{
-        type:Number
+    headCount: {
+        type: Number
     },
-    sessionDate:{
-        type:Date
+    sessionDate: {
+        type: Date
     },
-    startsAt:{
-        type:Date
+    startsAt: {
+        type: Date
     },
-    endsAt:{
-        type:Date
+    endsAt: {
+        type: Date
     },
-    actualEndTime:{
-        type:Date
+    actualEndTime: {
+        type: Date
     },
-    status:{
-        type:Number,
-        default:1
+    status: {
+        type: Number,
+        default: 1
     },
-    email:{
-        type:String
+    email: {
+        type: String
     },
-    emailcc:{
-        type:[String]
+    emailcc: {
+        type: [String]
     }
 },
-{
-    timestamps:true,
-    versionKey:false
-})
+    {
+        timestamps: true,
+        versionKey: false
+    })
 
-module.exports = mongoose.model('bookings',bookingSchema)
+module.exports = mongoose.model('bookings', bookingSchema)
