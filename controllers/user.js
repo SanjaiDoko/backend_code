@@ -649,6 +649,8 @@ module.exports = () => {
         return res.send({ status: 0, response: message.invalidId });
       }
 
+      let existingEod = await db.findSingleDocument("eod",{_id: new ObjectId(eodPayload.id)}, {createdBy: 1, managedBy: 1})
+
       let token = req.headers.authorization;
       token = token.substring(7);
 
@@ -656,7 +658,7 @@ module.exports = () => {
       if (!decodedToken) {
         return res.status(401).send("Unauthorized");
       } else {
-        if (decodedToken.userId !== eodPayload.managedBy || decodedToken.userId !== eodPayload.createdBy) {
+        if (!(decodedToken.userId !== existingEod.managedBy.toString() || decodedToken.userId !== existingEod.createdBy.toString())) {
           return res.status(401).send("Unauthorized");
         }
       }
