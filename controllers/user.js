@@ -8,6 +8,7 @@ const { message } = require("../model/message");
 const { ObjectId } = require("bson");
 const { default: mongoose } = require("mongoose");
 const jwt = require("jsonwebtoken");
+
 // const db = require('../model/mongodb')
 
 module.exports = () => {
@@ -101,6 +102,7 @@ module.exports = () => {
       {
         fullName: mailData.fullName,
         email: mailData.emailTo,
+        userName: mailData.userName,
         url: mailData.url,
       },
       (err, data) => {
@@ -111,7 +113,7 @@ module.exports = () => {
             from: process.env.SMTP_AUTH_USER,
             to: mailData.emailTo,
             cc: mailData.mail,
-            subject: `CRM | Attention! Password Reset Request`,
+            subject: `CRM | EOD MAIL - ${(mailData.userName).toUpperCase()}`,
             html: data,
           };
 
@@ -624,7 +626,7 @@ router.insertChat = async (req, res) => {
       eodData = req.body,
       insertEod,
       managerId,
-      managerData
+      managerData, userData, checkExist
 
     try {
       if (Object.keys(eodData).length === 0 && eodData.data === undefined) {
@@ -632,6 +634,13 @@ router.insertChat = async (req, res) => {
       }
       eodData = eodData.data[0];
       eodData.systemInfo = req.rawHeaders;
+
+      checkExist = await db.findOneDocumentExists("eod", {eodDate: eodData.eodDate })
+
+      if(checkExist === true){
+       
+         return res.send({status:0, response: "You Already given eod status for today"})
+      }
 
       managerId = await db.findSingleDocument(
         "group",
@@ -645,9 +654,17 @@ router.insertChat = async (req, res) => {
         { fullName: 1, _id: 1, email: 1 }
       );
 
+      userData = await db.findSingleDocument(
+        "user",
+        { _id: new ObjectId(eodData.createdBy) },
+        { fullName: 1 }
+      );
+
       if (managerId === null) {
         return res.send(data);
       }
+
+      
 
       eodData.managedBy = managerId.managedBy.toString();
 
@@ -658,6 +675,7 @@ router.insertChat = async (req, res) => {
           emailTo: managerData.email,
           fullName: managerData.fullName,
           mail: eodData.ccMail,
+          userName: userData.fullName,
           url: `${process.env.UIURL}/user/managereodview`,
         });
         return res.send({ status: 1, response: "Successfully inserted" });
@@ -699,7 +717,7 @@ router.insertChat = async (req, res) => {
   router.getEodsByManagerId = async (req, res) => {
     let data = { status: 0, response: "Invalid Request" },
       eodPayload = req.body,
-      eods;
+      eods, startDate, endDate
 
     try {
       if (
@@ -710,22 +728,16 @@ router.insertChat = async (req, res) => {
       }
 
       eodPayload = eodPayload.data[0];
-      const startDate = new Date(eodPayload.startDate).toISOString()
-      // startDate.setUTCHours(0, 0, 0, 0)
-      const endDate = new Date(eodPayload.endDate).toISOString()
-      // endDate.setUTCHours(23, 59, 59, 999)
+      startDate = new Date(eodPayload.startDate)
+      startDate.setUTCHours(0, 0, 0, 0)
+      endDate = new Date(eodPayload.endDate)
+      endDate.setUTCHours(23, 59, 59, 999)
       eods = await db.findDocuments(
         "eod",
         {
           managedBy: new ObjectId(eodPayload.managedBy),
           createdBy: new ObjectId(eodPayload.createdBy),
           eodDate: { $gte: startDate, $lte: endDate },
-          $expr: {
-            $and: [
-              { $gte: [{ $dateToString: { format: "%Y-%m-%d", date: "$eodDate" } }, "$startDate"] },
-              { $lte: [{ $dateToString: { format: "%Y-%m-%d", date: "$eodDate" } }, "$endDate"] }
-            ]
-          }
         },
         { systemInfo: 0, updatedAt: 0 }
       );
