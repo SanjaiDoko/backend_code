@@ -31,7 +31,7 @@ app.use(
 
 const io = socketIo(process.env.SOCKETPORT, {
   cors: {
-    origin: process.env.UIURL,
+    origin: "*",
   },
 });
 
