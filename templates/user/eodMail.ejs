@@ -2,7 +2,6 @@
 <html lang="en">
 <% let capitalize=(text)=> { return text.replace(/(^\w|\s\w)/g, o =>
   o.toUpperCase()) } %>
-
   <head>
   </head>
   <body>
@@ -17,23 +16,15 @@
           <tr style="padding: 0 30px 30px 30px !important;">
             <td>
             <h3>Dear <strong>
-                <%= capitalize(fullName)%>
-              </strong>,</h3>
+                <%= capitalize(fullName)%>,
+              </strong></h3>
             <p>
-              We received a password reset request for your account. If you did not initiate this request, please
-              disregard this
-              email. However, if you did request a password reset, please use the OTP and link given below to create a
-              new
-              password and regain access to your account.
+             You received the eod mail.
             </p>
             <p>
-              Use the following link to reset your account password.
+              Use the following link to see the Eod Mail.
               <strong><a class="validating" href="<%= url %>" style="font-weight: bold" target="_blank"
                   rel="noopener noreferrer">Click Here</a></strong>
-            </p>
-            <p>
-              For further assistance, kindly reach out to our Onboarding Team on
-              <strong>obt1@allmasters.ai, obt2@allmasters.ai</strong>
             </p>
             <p>Regards,</p>
             <p><strong>Mahendra</strong></p>

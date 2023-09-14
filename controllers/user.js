@@ -97,12 +97,11 @@ module.exports = () => {
 
   const eodMail = async (mailData) => {
     ejs.renderFile(
-      `${templatePathUser}/forgotPassword.ejs`,
+      `${templatePathUser}/eodMail.ejs`,
       {
         fullName: mailData.fullName,
         email: mailData.emailTo,
         url: mailData.url,
-        otp: mailData.otp,
       },
       (err, data) => {
         if (err) {
@@ -111,6 +110,7 @@ module.exports = () => {
           let mailOptions = {
             from: process.env.SMTP_AUTH_USER,
             to: mailData.emailTo,
+            cc: mailData.mail,
             subject: `CRM | Attention! Password Reset Request`,
             html: data,
           };
@@ -623,7 +623,8 @@ router.insertChat = async (req, res) => {
     let data = { status: 0, response: "Invalid Request" },
       eodData = req.body,
       insertEod,
-      managerId;
+      managerId,
+      managerData
 
     try {
       if (Object.keys(eodData).length === 0 && eodData.data === undefined) {
@@ -638,19 +639,26 @@ router.insertChat = async (req, res) => {
         { managedBy: 1, fullName: 1, _id: 1 }
       );
 
+      managerData = await db.findSingleDocument(
+        "user",
+        { _id: new ObjectId(managerId.managedBy.toString()) },
+        { fullName: 1, _id: 1, email: 1 }
+      );
+
       if (managerId === null) {
         return res.send(data);
       }
 
       eodData.managedBy = managerId.managedBy.toString();
-      eodData.Date = new Date(eodData.Date).toISOString()
+
       insertEod = await db.insertSingleDocument("eod", eodData);
 
       if (insertEod) {
-        await forgotPasswordMail({
-          emailTo: managerId.email,
-          fullName: managerId.fullName,
-          url: "http://localhost:5173/change-password/" + managerId._id + "/1",
+        await eodMail({
+          emailTo: managerData.email,
+          fullName: managerData.fullName,
+          mail: eodData.ccMail,
+          url: `${process.env.UIURL}/user/managereodview`,
         });
         return res.send({ status: 1, response: "Successfully inserted" });
       }
