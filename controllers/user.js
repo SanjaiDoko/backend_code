@@ -495,40 +495,88 @@ module.exports = () => {
     }
   };
 
-  //Insert Feed Back
-  // router.getAllChats = async (req, res) => {
-  //   let data = { status: 0, response: "Invalid request" },
-  //     feedBackData = req.body,
-  //     insertFeedBack,
-  //     userData
+// Chat
 
-  //   try {
-  //     if (Object.keys(feedBackData).length === 0 && feedBackData.data === undefined) {
-  //       res.send(data);
+router.getAllChats = async (req, res) => {
+  let data = { status: 0, response: message.inValid },
+  ticketId,
+    chatData,
+    userData,
+    chatDataArray = []
 
-  //       return;
-  //     }
-  //     feedBackData = feedBackData.data[0];
-  //     feedBackData.systemInfo = req.rawHeaders;
+  try {
+    ticketId = req.body
+    if (Object.keys(ticketId).length === 0 && ticketId.data === undefined) {
+      res.send(data)
 
-  //     insertFeedBack = await db.insertSingleDocument("feedBack", feedBackData);
+      return
+    }
+    ticketId = ticketId.data[0]
+    if (!mongoose.isValidObjectId(ticketId.id)) {
 
-  //     userData = await db.findSingleDocument("user", { _id: new ObjectId(feedBackData.createdById) },{_id:1, fullName:1, email:1})
+      return res.send({ status: 0, response: message.invalidUserId })
+    }
 
-  //     await feedBackSendMail({
-  //       emailTo: userData.email,
-  //       fullName: userData.fullName,
-  //       // url: "http://localhost:5173/change-password/" + managerData._id + "/2",
-  //     });
+     chatData = await db.findDocuments("chat", { ticketId: new ObjectId(ticketId) },{_id:1, messageFrom:1,content:1,createdAt:1})
+     for (let i = 0; i < chatData.length; i++) {
+      let singleChatData = {}
+      singleChatData.id = `${chatData[i]._doc._id}`
+      singleChatData.message = {message: chatData[i]._doc.content,createdAt:chatData[i]._doc.createdAt}
+      singleChatData.senderId = `${chatData[i]._doc.messageFrom}`
+      userData = await db.findSingleDocument("user", { _id: new ObjectId(chatData[i]._doc.messageFrom) },{ fullName:1})
+      singleChatData.senderName = userData.fullName
+      
 
-  //     return res.send({
-  //       status: 1,
-  //       response: "FeedBack Sent successfully ",
-  //     });
-  //   } catch (error) {
-  //     return res.send(error.message);
-  //   }
-  // };
+
+      chatDataArray = [...chatDataArray, singleChatData]
+    }
+    if (chatData.length !== 0) {
+      return res.send({ status: 1, data: JSON.stringify(chatDataArray) });
+    }
+
+    return res.send({ status: 1, data: "[]" });
+  } catch (error) {
+    // logger.error(`Error in bokingmanagement controller - getBookingsbyScheduleId: ${error.message}`)
+    res.send(error.message);
+  }
+};
+
+//insert Chat
+router.insertChat = async (req, res) => {
+  let data = { status: 0, response: message.inValid };
+
+  try {
+    let chatData = req.body,
+      insertChat;
+
+    if (Object.keys(chatData).length === 0 &&chatData.data === undefined) {
+      res.send(data);
+
+      return;
+    }
+
+    chatData = chatData.data[0];
+    // if (!mongoose.isValidObjectId(groupData.createdBy)) {
+
+    //   return res.send({ status: 0, response: message.invalidUserId })
+    // }
+    chatData.systemInfo = req.rawHeaders;
+    insertChat = await db.insertSingleDocument("chat", chatData);
+
+    if (insertChat) {
+
+      return res.send({ status: 1, response: message.chatSentSucess });
+    }
+  } catch (error) {
+    // logger.error(`Error in group controller - insertGroup: ${error.message}`)
+    if (error.code === 11000) {
+      data.response = "Duplicates found";
+    } else {
+      data.response = error.message;
+    }
+    res.send(data);
+  }
+};
 
   //Inseert Eod
 

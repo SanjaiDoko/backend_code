@@ -16,7 +16,7 @@ const fsRead = require("fs");
 // const { transporter } = require('./mail')
 // const imagePath = path.join(__dirname, "/../public/assets", "allmastersbanner.png");
 // let mailResendAttempts = 2
-
+const booking = require("../schema/booking.js")
 const { default: mongoose } = require("mongoose");
 const { transporter } = require("./mail");
 //convert the reading file to base64

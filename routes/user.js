@@ -32,9 +32,10 @@ module.exports = (app) => {
 
         app.post('/user/updateStatus', ensureAuthorized,  user.updatedUserStatusById) 
         
-        //chat
-        // app.post('/user/getChats', userValidation.checkChat,  user.getAllChats) 
-
+        // chats
+        app.post('/user/getChatsByTicketId', userValidation.checkId,  user.getAllChats) 
+        
+        app.post('/user/insertChat', userValidation.checkChat,  user.insertChat) 
 
         // Eod
 

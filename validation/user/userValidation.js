@@ -163,6 +163,28 @@ module.exports = function (app, io) {
     },
   ];
 
+  validator.checkChat = [
+    check("data").notEmpty().withMessage("Data cannot be empty"),
+    check("data.*.ticketId").notEmpty().withMessage("Ticke Id cannot be empty"),
+    check("data.*.messageFrom")
+      .notEmpty()
+      .withMessage("Message From cannot be empty"),
+    check("data.*.content")
+      .trim()
+      .notEmpty()
+      .withMessage("Content cannot be empty"),
+    (req, res, next) => {
+      const errors = validationResult(req).array();
+      if (errors.length > 0) {
+        data.response = errors[0].msg;
+
+        return res.send(data);
+      }
+
+      return next();
+    },
+  ];
+
   // validator.checkChangePassword = [
   //     check('data').notEmpty().withMessage('Data cannot be empty'),
   //     check('data.*.id').notEmpty().withMessage('Id is required field'),
