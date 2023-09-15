@@ -13,7 +13,7 @@ let groupSchema = mongoose.Schema({
     },
     users: {
         type: Array,
-        trim: true
+        default: []
     },
     status: {
         type: Number,
