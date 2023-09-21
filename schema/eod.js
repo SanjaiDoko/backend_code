@@ -3,8 +3,12 @@ const ObjectId = mongoose.Schema.Types.ObjectId
 
 let eodSummary = mongoose.Schema({
     hours:{
-        type: Number,
+        type: String,
         required: true
+    },
+    minutes:{
+        type: String,
+        default: "0"
     },
     taskDescription: {
         type: String,
