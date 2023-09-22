@@ -61,10 +61,7 @@ module.exports = () => {
         fullName: mailData.fullName,
         email: mailData.emailTo,
         url: mailData.url,
-        // linkdinUrl: mailData.linkdinUrl,
-        // instaUrl: mailData.instaUrl,
         otp: mailData.otp,
-        // logoUrl: common.getImageAsBase64(imagePath)
       },
       (err, data) => {
         if (err) {
@@ -113,7 +110,7 @@ module.exports = () => {
             from: process.env.SMTP_AUTH_USER,
             to: mailData.emailTo,
             cc: mailData.mail,
-            subject: `CRM | EOD MAIL - ${(mailData.userName).toUpperCase()}`,
+            subject: `CRM | EOD MAIL - ${mailData.userName.toUpperCase()}`,
             html: data,
           };
 
@@ -536,88 +533,95 @@ module.exports = () => {
     }
   };
 
-// Chat
+  // Chat
 
-router.getAllChats = async (req, res) => {
-  let data = { status: 0, response: message.inValid },
-  ticketId,
-    chatData,
-    userData,
-    chatDataArray = []
+  router.getAllChats = async (req, res) => {
+    let data = { status: 0, response: message.inValid },
+      ticketId,
+      chatData,
+      userData,
+      chatDataArray = [];
 
-  try {
-    ticketId = req.body
-    if (Object.keys(ticketId).length === 0 && ticketId.data === undefined) {
-      res.send(data)
+    try {
+      ticketId = req.body;
+      if (Object.keys(ticketId).length === 0 && ticketId.data === undefined) {
+        res.send(data);
 
-      return
+        return;
+      }
+      ticketId = ticketId.data[0];
+      if (!mongoose.isValidObjectId(ticketId.id)) {
+        return res.send({ status: 0, response: message.invalidUserId });
+      }
+
+      chatData = await db.findDocuments(
+        "chat",
+        { ticketId: new ObjectId(ticketId) },
+        { _id: 1, messageFrom: 1, content: 1, createdAt: 1 }
+      );
+      for (let i = 0; i < chatData.length; i++) {
+        let singleChatData = {};
+        singleChatData.id = `${chatData[i]._doc._id}`;
+        singleChatData.message = {
+          message: chatData[i]._doc.content,
+          createdAt: chatData[i]._doc.createdAt,
+        };
+        singleChatData.senderId = `${chatData[i]._doc.messageFrom}`;
+        userData = await db.findSingleDocument(
+          "user",
+          { _id: new ObjectId(chatData[i]._doc.messageFrom) },
+          { fullName: 1 }
+        );
+        singleChatData.senderName = userData.fullName;
+
+        chatDataArray = [...chatDataArray, singleChatData];
+      }
+      if (chatData.length !== 0) {
+        return res.send({ status: 1, data: JSON.stringify(chatDataArray) });
+      }
+
+      return res.send({ status: 1, data: "[]" });
+    } catch (error) {
+      // logger.error(`Error in bokingmanagement controller - getBookingsbyScheduleId: ${error.message}`)
+      res.send(error.message);
     }
-    ticketId = ticketId.data[0]
-    if (!mongoose.isValidObjectId(ticketId.id)) {
+  };
 
-      return res.send({ status: 0, response: message.invalidUserId })
-    }
+  //insert Chat
+  router.insertChat = async (req, res) => {
+    let data = { status: 0, response: message.inValid };
 
-     chatData = await db.findDocuments("chat", { ticketId: new ObjectId(ticketId) },{_id:1, messageFrom:1,content:1,createdAt:1})
-     for (let i = 0; i < chatData.length; i++) {
-      let singleChatData = {}
-      singleChatData.id = `${chatData[i]._doc._id}`
-      singleChatData.message = {message: chatData[i]._doc.content,createdAt:chatData[i]._doc.createdAt}
-      singleChatData.senderId = `${chatData[i]._doc.messageFrom}`
-      userData = await db.findSingleDocument("user", { _id: new ObjectId(chatData[i]._doc.messageFrom) },{ fullName:1})
-      singleChatData.senderName = userData.fullName
-      
+    try {
+      let chatData = req.body,
+        insertChat;
 
+      if (Object.keys(chatData).length === 0 && chatData.data === undefined) {
+        res.send(data);
 
-      chatDataArray = [...chatDataArray, singleChatData]
-    }
-    if (chatData.length !== 0) {
-      return res.send({ status: 1, data: JSON.stringify(chatDataArray) });
-    }
+        return;
+      }
 
-    return res.send({ status: 1, data: "[]" });
-  } catch (error) {
-    // logger.error(`Error in bokingmanagement controller - getBookingsbyScheduleId: ${error.message}`)
-    res.send(error.message);
-  }
-};
+      chatData = chatData.data[0];
+      // if (!mongoose.isValidObjectId(groupData.createdBy)) {
 
-//insert Chat
-router.insertChat = async (req, res) => {
-  let data = { status: 0, response: message.inValid };
+      //   return res.send({ status: 0, response: message.invalidUserId })
+      // }
+      chatData.systemInfo = req.rawHeaders;
+      insertChat = await db.insertSingleDocument("chat", chatData);
 
-  try {
-    let chatData = req.body,
-      insertChat;
-
-    if (Object.keys(chatData).length === 0 &&chatData.data === undefined) {
+      if (insertChat) {
+        return res.send({ status: 1, response: message.chatSentSucess });
+      }
+    } catch (error) {
+      // logger.error(`Error in group controller - insertGroup: ${error.message}`)
+      if (error.code === 11000) {
+        data.response = "Duplicates found";
+      } else {
+        data.response = error.message;
+      }
       res.send(data);
-
-      return;
     }
-
-    chatData = chatData.data[0];
-    // if (!mongoose.isValidObjectId(groupData.createdBy)) {
-
-    //   return res.send({ status: 0, response: message.invalidUserId })
-    // }
-    chatData.systemInfo = req.rawHeaders;
-    insertChat = await db.insertSingleDocument("chat", chatData);
-
-    if (insertChat) {
-
-      return res.send({ status: 1, response: message.chatSentSucess });
-    }
-  } catch (error) {
-    // logger.error(`Error in group controller - insertGroup: ${error.message}`)
-    if (error.code === 11000) {
-      data.response = "Duplicates found";
-    } else {
-      data.response = error.message;
-    }
-    res.send(data);
-  }
-};
+  };
 
   //Inseert Eod
 
@@ -626,7 +630,10 @@ router.insertChat = async (req, res) => {
       eodData = req.body,
       insertEod,
       managerId,
-      managerData, userData, checkExist
+      managerData,
+      userData,
+      existingEod,
+      ccMails;
 
     try {
       if (Object.keys(eodData).length === 0 && eodData.data === undefined) {
@@ -634,14 +641,9 @@ router.insertChat = async (req, res) => {
       }
       eodData = eodData.data[0];
       eodData.systemInfo = req.rawHeaders;
-
-      checkExist = await db.findOneDocumentExists("eod", {eodDate: eodData.eodDate })
-
-      if(checkExist === true){
-       
-         return res.send({status:0, response: "You Already given eod status for today"})
-      }
-
+      existingEod = await db.findSingleDocument("eod", {
+        eodDate: eodData.eodDate,
+      });
       managerId = await db.findSingleDocument(
         "group",
         { _id: new ObjectId(eodData.groupId) },
@@ -664,8 +666,26 @@ router.insertChat = async (req, res) => {
         return res.send(data);
       }
 
-      
+      if (existingEod) {
+        ccMails = [...new Set([...existingEod.ccMail, ...eodData.ccMail])];
+        await db.findOneAndUpdate(
+          "eod",
+          { eodDate: eodData.eodDate },
+          {
+            $push: { eodSummary: { $each: eodData.eodSummary } },
+            ccMail: ccMails,
+          }
+        );
+        await eodMail({
+          emailTo: managerData.email,
+          fullName: managerData.fullName,
+          mail: eodData.ccMail,
+          userName: userData.fullName,
+          url: `${process.env.UIURL}/user/managereodview`,
+        });
 
+        return res.send({ status: 1, response: "Updated the eod sucessfully" });
+      }
       eodData.managedBy = managerId.managedBy.toString();
 
       insertEod = await db.insertSingleDocument("eod", eodData);
@@ -717,7 +737,9 @@ router.insertChat = async (req, res) => {
   router.getEodsByManagerId = async (req, res) => {
     let data = { status: 0, response: "Invalid Request" },
       eodPayload = req.body,
-      eods, startDate, endDate
+      eods,
+      startDate,
+      endDate;
 
     try {
       if (
@@ -728,10 +750,10 @@ router.insertChat = async (req, res) => {
       }
 
       eodPayload = eodPayload.data[0];
-      startDate = new Date(eodPayload.startDate)
-      startDate.setUTCHours(0, 0, 0, 0)
-      endDate = new Date(eodPayload.endDate)
-      endDate.setUTCHours(23, 59, 59, 999)
+      startDate = new Date(eodPayload.startDate);
+      startDate.setUTCHours(0, 0, 0, 0);
+      endDate = new Date(eodPayload.endDate);
+      endDate.setUTCHours(23, 59, 59, 999);
       eods = await db.findDocuments(
         "eod",
         {
@@ -767,7 +789,11 @@ router.insertChat = async (req, res) => {
         return res.send({ status: 0, response: message.invalidId });
       }
 
-      let existingEod = await db.findSingleDocument("eod",{_id: new ObjectId(eodPayload.id)}, {createdBy: 1, managedBy: 1})
+      let existingEod = await db.findSingleDocument(
+        "eod",
+        { _id: new ObjectId(eodPayload.id) },
+        { createdBy: 1, managedBy: 1 }
+      );
 
       let token = req.headers.authorization;
       token = token.substring(7);
@@ -776,20 +802,27 @@ router.insertChat = async (req, res) => {
       if (!decodedToken) {
         return res.status(401).send("Unauthorized");
       } else {
-        if (!(decodedToken.userId !== existingEod.managedBy.toString() || decodedToken.userId !== existingEod.createdBy.toString())) {
+        if (
+          !(
+            decodedToken.userId !== existingEod.managedBy.toString() ||
+            decodedToken.userId !== existingEod.createdBy.toString()
+          )
+        ) {
           return res.status(401).send("Unauthorized");
         }
       }
 
-      eodData = await db.findDocuments('eod', {_id: new ObjectId(eodPayload.id)}, {systemInfo: 0, updatedAt: 0})
+      eodData = await db.findDocuments(
+        "eod",
+        { _id: new ObjectId(eodPayload.id) },
+        { systemInfo: 0, updatedAt: 0 }
+      );
 
-      if(eodData){
-
-        return res.send({status: 1, data: JSON.stringify(eodData) })
+      if (eodData) {
+        return res.send({ status: 1, data: JSON.stringify(eodData) });
       }
 
-      res.send(data)
-
+      res.send(data);
     } catch (error) {
       console.log(
         `Error in country controller - getCountryList: ${error.message}`
