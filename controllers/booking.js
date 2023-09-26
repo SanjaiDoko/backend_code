@@ -37,6 +37,7 @@ module.exports = () => {
                         "TotalBooking.sessionDate": 1,
                         "TotalBooking.startsAt": 1,
                         "TotalBooking.endsAt": 1,
+                        "TotalBooking.status": 1,
                     },
                 },
             ]);
@@ -53,6 +54,7 @@ module.exports = () => {
                     arr.date = event.TotalBooking.sessionDate;
                     arr.startsAt = event.TotalBooking.startsAt;
                     arr.endsAt = event.TotalBooking.endsAt;
+                    arr.status = event.TotalBooking.status;
                     return arr;
                 });
                 return res.send({ status: 1, data: JSON.stringify(info) });
