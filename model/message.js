@@ -34,7 +34,7 @@ module.exports.message = ({
     chatSentSucess: "Chat sent Successfully",
     updateGroupSucess: "Group Updated Successfully",
     removeUserGroupSucess: "User Removed From Group Successfully",
-    notFoundCountry: "Country Not Found",
+    notFoundTicket: "Ticket Not Found",
     laneExist: "Lane Already Exists",
     addedLaneSucess: "Lane Added Successfully",
     notFoundLane: "Lane Not Found",

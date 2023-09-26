@@ -84,8 +84,8 @@ module.exports = function (app, io) {
   validator.managerUpdateTicket = [
     check("data").notEmpty().withMessage("Data cannot be empty"),
     check("data.*.id").trim().notEmpty().withMessage("Id cannot be empty"),
-    check("data.*.assignedTo").trim().notEmpty().withMessage("Problem cannot be empty"),
-    check("data.*.endTime").trim().notEmpty().withMessage("EndTime cannot be empty"),
+    // check("data.*.assignedTo").trim().notEmpty().withMessage("Assigned To cannot be empty"),
+    // check("data.*.endTime").trim().notEmpty().withMessage("EndTime cannot be empty"),
     (req, res, next) => {
       const errors = validationResult(req).array();
       if (errors.length > 0) {
