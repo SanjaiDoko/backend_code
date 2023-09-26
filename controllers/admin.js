@@ -274,7 +274,7 @@ module.exports = () => {
         await db.updateOneDocument(
           "user",
           { _id: new ObjectId(users[i]) },
-          { groupId: groupData.id, status:1, },
+          { groupId: groupData.id },
 
         );
       }
