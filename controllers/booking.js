@@ -26,11 +26,11 @@ module.exports = () => {
                     },
                 },
                 { $unwind: "$TotalBooking" },
-                { $match: { "TotalBooking.status": 1 } },
                 {
                     $project: {
                         _id: 0,
                         "TotalBooking._id": 1,
+                        "TotalBooking.status": 1,
                         "TotalBooking.userBooked": 1,
                         "TotalBooking.bookedReason": 1,
                         "TotalBooking.sessionDate": 1,
@@ -45,7 +45,8 @@ module.exports = () => {
             } else {
                 let info = getInfo.map((event) => {
                     let arr = new Object();
-                    arr.bookingId = event.TotalBooking._id
+                    arr.bookingId = event.TotalBooking._id;
+                    arr.status = event.TotalBooking.status;
                     arr.userBooked = event.TotalBooking.userBooked;
                     arr.bookedReason = event.TotalBooking.bookedReason;
                     arr.date = event.TotalBooking.sessionDate;
@@ -175,10 +176,12 @@ module.exports = () => {
     router.getMyBookings = async (req, res) => {
         try {
             let getMyHistory = req.body,
-                getEvents;
+                getEvents, id;
 
             getMyHistory = getMyHistory.data[0];
+            id = new mongoose.Types.ObjectId(getMyHistory.id)
             getEvents = await Booking.aggregate([
+                { $match: { bookedBy: id } },
                 {
                     $lookup: {
                         from: "rooms",
@@ -195,7 +198,8 @@ module.exports = () => {
 
             let info = getEvents.map((event) => {
                 let arr = {};
-                arr.bookingId = event._id
+                arr.bookingId = event._id;
+                arr.bookedBy = event.bookedBy;
                 arr.roomName = event.RoomDetails[0].roomName;
                 arr.roomNo = event.RoomDetails[0].roomNo;
                 arr.bookedReason = event.bookedReason;
