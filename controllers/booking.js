@@ -1,6 +1,7 @@
 const Room = require("../schema/room.js");
 const Booking = require("../schema/booking.js");
 const mongoose = require("mongoose");
+const moment = require("moment")
 const { ObjectId } = require("bson");
 const db = require("../model/mongodb");
 const { scheduleEmail, scheduleStartAndEnd } = require("../model/common.js");
@@ -26,11 +27,11 @@ module.exports = () => {
                     },
                 },
                 { $unwind: "$TotalBooking" },
-                { $match: { "TotalBooking.status": 1 } },
                 {
                     $project: {
                         _id: 0,
                         "TotalBooking._id": 1,
+                        "TotalBooking.status": 1,
                         "TotalBooking.userBooked": 1,
                         "TotalBooking.bookedReason": 1,
                         "TotalBooking.sessionDate": 1,
@@ -45,7 +46,8 @@ module.exports = () => {
             } else {
                 let info = getInfo.map((event) => {
                     let arr = new Object();
-                    arr.bookingId = event.TotalBooking._id
+                    arr.bookingId = event.TotalBooking._id;
+                    arr.status = event.TotalBooking.status;
                     arr.userBooked = event.TotalBooking.userBooked;
                     arr.bookedReason = event.TotalBooking.bookedReason;
                     arr.date = event.TotalBooking.sessionDate;
@@ -89,7 +91,7 @@ module.exports = () => {
             let bookRoom = req.body,
                 getBooking,
                 checkExist,
-                getUser;
+                getUser, startTime, endTime;
             bookRoom = bookRoom.data[0];
 
             if (bookRoom.endsAt < bookRoom.startsAt) {
@@ -124,7 +126,19 @@ module.exports = () => {
                 }
             }
             getUser = await db.findSingleDocument("user", { _id: bookRoom.bookedBy });
+
+            startTime = new Date(bookRoom.startsAt);
+            startTime.setMilliseconds(startTime.getMilliseconds() + 60000);
+            startTime = startTime.toISOString();
+
+            endTime = new Date(bookRoom.endsAt);
+            endTime.setMilliseconds(endTime.getMilliseconds() - 60000);
+            endTime = endTime.toISOString();
+
             bookRoom.userBooked = getUser.fullName;
+            bookRoom.startsAt = startTime
+            bookRoom.endsAt = endTime
+
             getBooking = await db.insertSingleDocument("booking", bookRoom);
             await db.updateOneDocument(
                 "booking",
@@ -175,10 +189,12 @@ module.exports = () => {
     router.getMyBookings = async (req, res) => {
         try {
             let getMyHistory = req.body,
-                getEvents;
+                getEvents, id;
 
             getMyHistory = getMyHistory.data[0];
+            id = new mongoose.Types.ObjectId(getMyHistory.id)
             getEvents = await Booking.aggregate([
+                { $match: { bookedBy: id } },
                 {
                     $lookup: {
                         from: "rooms",
@@ -195,7 +211,8 @@ module.exports = () => {
 
             let info = getEvents.map((event) => {
                 let arr = {};
-                arr.bookingId = event._id
+                arr.bookingId = event._id;
+                arr.bookedBy = event.bookedBy;
                 arr.roomName = event.RoomDetails[0].roomName;
                 arr.roomNo = event.RoomDetails[0].roomNo;
                 arr.bookedReason = event.bookedReason;
