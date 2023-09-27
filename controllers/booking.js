@@ -1,7 +1,6 @@
 const Room = require("../schema/room.js");
 const Booking = require("../schema/booking.js");
 const mongoose = require("mongoose");
-const moment = require("moment")
 const { ObjectId } = require("bson");
 const db = require("../model/mongodb");
 const { scheduleEmail, scheduleStartAndEnd } = require("../model/common.js");
@@ -27,6 +26,7 @@ module.exports = () => {
                     },
                 },
                 { $unwind: "$TotalBooking" },
+                { $match: { "$TotalBooking.status": 1 } },
                 {
                     $project: {
                         _id: 0,
@@ -129,17 +129,17 @@ module.exports = () => {
             }
             getUser = await db.findSingleDocument("user", { _id: bookRoom.bookedBy });
 
-            startTime = new Date(bookRoom.startsAt);
-            startTime.setMilliseconds(startTime.getMilliseconds() + 60000);
-            startTime = startTime.toISOString();
+            // startTime = new Date(bookRoom.startsAt);
+            // startTime.setMilliseconds(startTime.getMilliseconds() + 60000);
+            // startTime = startTime.toISOString();
 
-            endTime = new Date(bookRoom.endsAt);
-            endTime.setMilliseconds(endTime.getMilliseconds() - 60000);
-            endTime = endTime.toISOString();
+            // endTime = new Date(bookRoom.endsAt);
+            // endTime.setMilliseconds(endTime.getMilliseconds() - 60000);
+            // endTime = endTime.toISOString();
 
             bookRoom.userBooked = getUser.fullName;
-            bookRoom.startsAt = startTime
-            bookRoom.endsAt = endTime
+            // bookRoom.startsAt = startTime
+            // bookRoom.endsAt = endTime
 
             getBooking = await db.insertSingleDocument("booking", bookRoom);
             await db.updateOneDocument(
