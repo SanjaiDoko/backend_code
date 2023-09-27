@@ -341,7 +341,7 @@ module.exports = () => {
       if (updateTicket.modifiedCount !== 0 && updateTicket.matchedCount !== 0) {
         return res.send({ status: 1, response: message.updatedSucess });
       } else {
-        return res.send({ status: 1, response: message.notFoundCountry });
+        return res.send({ status: 1, response: message.notFoundTicket });
       }
     } catch (error) {
       console.log(
@@ -380,6 +380,21 @@ module.exports = () => {
 
       let token = req.headers.authorization;
       token = token.substring(7);
+
+      if(ticketData.status === 3){
+        updateTicket = await db.findOneAndUpdate(
+          "ticket",
+          { _id: new ObjectId(ticketData.id), status: { $in: [1, 2, 0, 3] } },
+          {
+            status: ticketData.status,
+          }
+        );
+        if (updateTicket.modifiedCount !== 0 && updateTicket.matchedCount !== 0) {
+          return res.send({ status: 1, response: message.updatedSucess });
+        } else {
+          return res.send({ status: 1, response: message.notFoundTicket });
+        }
+      }
 
       assignedNameData = await db.findSingleDocument(
         "user",
@@ -430,7 +445,7 @@ module.exports = () => {
       if (updateTicket.modifiedCount !== 0 && updateTicket.matchedCount !== 0) {
         return res.send({ status: 1, response: message.updatedSucess });
       } else {
-        return res.send({ status: 1, response: message.notFoundCountry });
+        return res.send({ status: 1, response: message.notFoundTicket });
       }
     } catch (error) {
       console.log(
@@ -541,7 +556,7 @@ module.exports = () => {
       if (updateTicket.modifiedCount !== 0 && updateTicket.matchedCount !== 0) {
         return res.send({ status: 1, response: message.updatedSucess });
       } else {
-        return res.send({ status: 1, response: message.notFoundCountry });
+        return res.send({ status: 1, response: message.notFoundTicket });
       }
     } catch (error) {
       console.log(
