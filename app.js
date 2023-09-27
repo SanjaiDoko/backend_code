@@ -79,14 +79,17 @@ io.on("connection", (socket) => {
 
   // send and get message
   socket.on("sendMessage", ({ senderId,senderName,receiverId, text, createdAt }) => {
-    for(let i=0; i<receiverId.length;i++){
-      const user = getUser(receiverId[i],users);
-      io.to(user[0]?.socketId).emit("getMessage", {
-        senderId,
-        senderName,
-        text,
-        createdAt
-      });
+    const uniqueReceivers = [...new Set(receiverId)]
+    for(let i=0; i<uniqueReceivers.length;i++){
+      if(senderId !== uniqueReceivers[i] ){
+        const user = getUser(uniqueReceivers[i],users);
+        io.to(user[0]?.socketId).emit("getMessage", {
+          senderId,
+          senderName,
+          text,
+          createdAt
+        });
+      }
     }
   });
 
