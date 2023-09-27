@@ -51,7 +51,7 @@ let userSchema = mongoose.Schema({
     },
     status: {           // 1 - active user, 2 - deactive user
         type: Number,
-        default: 2
+        default: 1
     },
 }, { timestamps: true, versionKey: false });
 
