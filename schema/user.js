@@ -25,7 +25,7 @@ let userSchema = mongoose.Schema({
         trim: true
     },
     role: {
-        type: Number,                // 1 - user, 2 - admin
+        type: Number,                // 1 - user, 
         default: 1
     },
     pwOtp: {
