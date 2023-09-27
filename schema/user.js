@@ -25,7 +25,7 @@ let userSchema = mongoose.Schema({
         trim: true
     },
     role: {
-        type: Number,                // 1 - user, 
+        type: Number,                // 1 - user, role - 3 manager, role - 2 admin
         default: 1
     },
     pwOtp: {
@@ -36,6 +36,17 @@ let userSchema = mongoose.Schema({
         type: ObjectId,
         ref:"group",
         default:null,
+    },
+    managedBy: {
+        type: ObjectId,
+        default:null,
+    },
+    access: {
+        ticket: { type: Number, default: 0 },
+        sales: { type: Number, default: 0 },
+        eod: { type: Number, default: 0 },
+        room: { type: Number, default: 0 },
+        requirement: { type: Number, default: 0 },
     },
     createdBy: {
         type: ObjectId
