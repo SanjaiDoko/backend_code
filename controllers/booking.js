@@ -26,7 +26,6 @@ module.exports = () => {
                     },
                 },
                 { $unwind: "$TotalBooking" },
-                { $match: { "$TotalBooking.status": 1 } },
                 {
                     $project: {
                         _id: 0,
