@@ -873,6 +873,8 @@ module.exports = () => {
             endTime: 1,
             timeLog: 1,
             ticketId: 1,
+            problem: 1,
+            resolution: 1
           },
         },
       ];

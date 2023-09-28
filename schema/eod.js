@@ -13,6 +13,9 @@ let eodSummary = mongoose.Schema({
     taskDescription: {
         type: String,
         required: true
+    },
+    taskStatus: {                // 1 - completed, 2 - Inprogress
+        type: Number,
     }
 })
 
