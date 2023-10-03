@@ -188,8 +188,9 @@ module.exports = () => {
       }
 
       if (store.length > 0) {
+        let lastId = store[store.length - 1].split("-")[1];
         ticketData.ticketId =
-          "#" + groupName + "-" + String(store.length + 1).padStart(2, "0");
+          "#" + groupName + "-" + String(parseInt(lastId) + 1).padStart(2, "0");
       }
 
       insertTicket = await db.insertSingleDocument("ticket", ticketData);
@@ -546,7 +547,8 @@ module.exports = () => {
         { _id: new ObjectId(ticketData.id), status: { $in: [1, 2, 0, 3] } },
         {
           actualEndTime: ticketData.actualEndTime,
-          timeLog: ticketData.timeLog,
+          "timeLog.hours": ticketData.hours,
+          "timeLog.minutes": ticketData.minutes,
           problem: ticketData.problem,
           resolution: ticketData.resolution,
           status: ticketData.status

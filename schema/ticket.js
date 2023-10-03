@@ -1,6 +1,7 @@
 let mongoose = require("mongoose");
 const ObjectId = mongoose.Schema.Types.ObjectId
 
+
 //User Schema
 let ticketSchema = mongoose.Schema({
     ticketId: {
@@ -58,7 +59,13 @@ let ticketSchema = mongoose.Schema({
         default: null
     },
     timeLog: {
-        type: String
+        hours:{
+            type: String
+        },
+        minutes:{
+            type: String,
+            default: "0"
+        }
     },
     files:{
         type:Array
